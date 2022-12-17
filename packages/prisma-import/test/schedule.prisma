@@ -1,0 +1,29 @@
+model ScheduleControl {
+  id         Int            @id @default(autoincrement())
+  status     ScheduleStatus
+  schedule   Schedule       @relation(fields: [scheduleId], references: [id])
+  scheduleId String
+  meta       Json?
+  startedAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  finishedAt DateTime?
+}
+
+model Schedule {
+  id          String            @id @unique
+  displayName String
+  image       String
+  cron        String
+  verboseCron String
+  active      Boolean           @default(false)
+  controls    ScheduleControl[]
+}
+
+enum ScheduleStatus {
+  waiting
+  running
+  completed
+  skipped
+  failed
+  cancelled
+}

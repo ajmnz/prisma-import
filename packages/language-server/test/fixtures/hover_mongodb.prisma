@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  content  String?
+  author   User    @relation(fields: [authorId], references: [id])
+  authorId String
+}
+
+model User {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
+  posts Post[]
+
+  embedHolder   EmbedHolder @relation(fields: [embedHolderId], references: [id])
+  embedHolderId String
+}
+
+model EmbedHolder {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  time          DateTime @default(now())
+  text          String
+  boolean       Boolean
+  embedList     Embed[]
+  requiredEmbed Embed
+  optionalEmbed Embed?
+  User          User[]
+}
+
+type Embed {
+  text               String
+  boolean            Boolean
+  embedEmbedList     EmbedEmbed[]
+  requiredEmbedEmbed EmbedEmbed
+  optionalEmbedEmbed EmbedEmbed?
+  scalarList         Int[]        @default([1])
+}
+
+type EmbedEmbed {
+  text    String
+  boolean Boolean
+}

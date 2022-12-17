@@ -1,0 +1,16 @@
+{
+  "references": [
+    {
+      "path": "./packages/vscode"
+    },
+    {
+      "path": "./packages/language-server"
+    },
+    {
+      "path": "./packages/prisma-import"
+    }
+  ],
+  "exclude": ["**/node_modules", ".vscode-test"],
+  "files": [],
+  "include": []
+}

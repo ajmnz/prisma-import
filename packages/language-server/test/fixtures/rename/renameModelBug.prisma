@@ -1,0 +1,10 @@
+model undozaknos {
+  idUndo   Int @id
+  idObdobi Int
+  ncis     Int
+}
+
+model zaknos {
+  idObdobi Int @id
+  ncis     Int
+}

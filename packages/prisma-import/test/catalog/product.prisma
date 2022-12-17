@@ -1,0 +1,265 @@
+import { OrderDetail, Order } from "../orders/order"
+import { ExternalOrderDetail } from "../orders/external-order"
+import { CatalogRewrites } from "catalog"
+import { ProductReview } from "../review"
+import { Cart, CartProduct, CartRule, ProductPromotion } from "../cart"
+import { Category } from "category"
+import { Manufacturer } from "manufacturer"
+import { Customer } from "../customer"
+import { Lang } from "../geo"
+import { Foo } from "../admin"
+
+model Product {
+  id                  Int                   @id @default(autoincrement())
+  sku                 String                @unique
+  manufacturer        Manufacturer?         @relation(fields: [manufacturerId], references: [id])
+  manufacturerId      Int?
+  defaultCategory     Category              @relation(name: "DefaultCategory", fields: [defaultCategoryId], references: [id])
+  defaultCategoryId   Int
+  categories          Category[]
+  ean13               String?
+  minimumQuantity     Int                   @default(1)
+  price               Decimal               @default(0.000000) @db.Decimal(20, 6)
+  handling            ProductHandling?
+  reference           String
+  width               Decimal               @default(0.000000) @db.Decimal(20, 6)
+  height              Decimal               @default(0.000000) @db.Decimal(20, 6)
+  depth               Decimal               @default(0.000000) @db.Decimal(20, 6)
+  weight              Decimal               @default(0.000000) @db.Decimal(20, 6)
+  active              Boolean               @default(false)
+  restockDate         DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  attachments         Attachment[]
+  images              Image[]
+  carts               CartProduct[]
+  lang                ProductLang[]
+  specificPrice       SpecificPrice?
+  featureProduct      FeatureProduct[]
+  orderDetail         OrderDetail[]
+  productSale         ProductSale?
+  stock               ProductStock?
+  externalOrderDetail ExternalOrderDetail[]
+  reviews             ProductReview[]
+  promotions          ProductPromotion[]
+  rewrites            CatalogRewrites[]
+  cartRules           CartRule[]
+  gift                ProductGift?
+  Foo                 Foo[]
+
+  @@index([createdAt])
+  @@index([defaultCategoryId])
+  @@index([manufacturerId])
+}
+
+model ProductLang {
+  product          Product @relation(fields: [productId], references: [id])
+  productId        Int
+  lang             Lang    @relation(fields: [langId], references: [id])
+  langId           Int
+  name             String
+  linkRewrite      String
+  description      String? @db.Text
+  descriptionShort String?
+  metaDescription  String?
+  metaKeywords     String?
+  metaTitle        String?
+
+  @@id([productId, langId])
+  @@index([langId])
+  @@index([name])
+}
+
+model ProductGift {
+  id        Int               @id @default(autoincrement())
+  sku       String?
+  imageUri  String?
+  product   Product?          @relation(fields: [productId], references: [id])
+  productId Int?              @unique
+  quantity  Int?
+  validFrom DateTime?
+  validTo   DateTime?
+  active    Boolean           @default(true)
+  lang      ProductGiftLang[]
+  carts     Cart[]
+  orders    Order[]
+}
+
+model ProductGiftLang {
+  productGift   ProductGift @relation(fields: [productGiftId], references: [id])
+  productGiftId Int
+  lang          Lang        @relation(fields: [langId], references: [id])
+  langId        Int
+  name          String
+  description   String?
+
+  @@id([productGiftId, langId])
+}
+
+model ProductStock {
+  id        Int                    @id @default(autoincrement())
+  product   Product                @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int                    @default(0)
+  inStock   Boolean                @default(false)
+  movements ProductStockMovement[]
+
+  @@unique([productId])
+  @@index([productId])
+}
+
+/// Change in stocks records
+model ProductStockMovement {
+  id             Int          @id @default(autoincrement())
+  productStock   ProductStock @relation(fields: [productStockId], references: [id])
+  productStockId Int
+  author         String
+  fromQuantity   Int?
+  toQuantity     Int?
+}
+
+model ProductSale {
+  product      Product  @relation(fields: [productId], references: [id])
+  productId    Int      @id
+  quantitySold Int      @default(0)
+  timesSold    Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+/// Extra price that a product can have
+model ProductHandling {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int     @unique
+  lang      Lang    @relation(fields: [langId], references: [id])
+  langId    Int
+  price     Decimal @default(0.000000) @db.Decimal(20, 6)
+}
+
+/// Product pricing
+model SpecificPrice {
+  id            Int                         @id @default(autoincrement())
+  cart          Cart?                       @relation(fields: [cartId], references: [id])
+  cartId        Int?                        @unique
+  product       Product                     @relation(fields: [productId], references: [id])
+  productId     Int                         @unique
+  customer      Customer?                   @relation(fields: [customerId], references: [id])
+  customerId    Int?
+  fromQuantity  Int                         @default(1)
+  reduction     Decimal                     @db.Decimal(20, 6)
+  reductionTax  Boolean                     @default(true)
+  reductionType SpecificPrice_reductionType
+  pimPrice      Decimal                     @default(0) @db.Decimal(20, 6)
+  dateFrom      DateTime?
+  dateTo        DateTime?
+
+  @@unique([productId, customerId, cartId, fromQuantity, dateTo, dateFrom])
+  @@index([productId, customerId, fromQuantity, dateFrom, dateTo])
+  @@index([fromQuantity])
+  @@index([customerId])
+  @@index([productId])
+  @@index([cartId])
+  @@index([dateFrom])
+  @@index([dateTo])
+}
+
+enum SpecificPrice_reductionType {
+  amount
+  percentage
+}
+
+model Attachment {
+  id          Int       @id @default(autoincrement())
+  uri         String
+  fileName    String
+  fileSize    BigInt    @default(0)
+  displayName String?
+  mime        String    @default("application/pdf")
+  products    Product[]
+  lang        Lang      @relation(fields: [langId], references: [id])
+  langId      Int
+}
+
+model Feature {
+  id              Int                @id @default(autoincrement())
+  position        Int                @default(0)
+  values          FeatureValue[]
+  featureProducts FeatureProduct[]
+  lang            FeatureLang[]
+  valuesLang      FeatureValueLang[]
+}
+
+model FeatureLang {
+  feature   Feature @relation(fields: [featureId], references: [id])
+  featureId Int
+  lang      Lang    @relation(fields: [langId], references: [id])
+  langId    Int
+  name      String
+  key       String
+
+  @@id([featureId, langId])
+  @@unique([langId, key])
+  @@index([langId, name])
+}
+
+model FeatureProduct {
+  feature        Feature      @relation(fields: [featureId], references: [id])
+  featureId      Int
+  product        Product      @relation(fields: [productId], references: [id])
+  productId      Int
+  featureValue   FeatureValue @relation(fields: [featureValueId], references: [id])
+  featureValueId Int
+
+  @@id([featureId, productId, featureValueId])
+  @@index([featureValueId])
+  @@index([productId])
+}
+
+model FeatureValue {
+  id              Int                @id @default(autoincrement())
+  feature         Feature            @relation(fields: [featureId], references: [id])
+  featureId       Int
+  custom          Boolean            @default(false)
+  featureProducts FeatureProduct[]
+  lang            FeatureValueLang[]
+
+  @@index([featureId])
+}
+
+model FeatureValueLang {
+  feature        Feature      @relation(fields: [featureId], references: [id])
+  featureId      Int
+  featureValue   FeatureValue @relation(fields: [featureValueId], references: [id])
+  featureValueId Int
+  lang           Lang         @relation(fields: [langId], references: [id])
+  langId         Int
+  value          String
+  key            String
+
+  @@id([featureValueId, langId])
+  @@unique([featureId, key, langId])
+}
+
+model Image {
+  id        Int         @id @default(autoincrement())
+  uri       String
+  product   Product     @relation(fields: [productId], references: [id])
+  productId Int
+  position  Int         @default(0) @db.SmallInt
+  cover     Boolean     @default(true)
+  lang      ImageLang[]
+
+  @@index([productId])
+}
+
+model ImageLang {
+  image   Image   @relation(fields: [imageId], references: [id])
+  imageId Int
+  lang    Lang    @relation(fields: [langId], references: [id])
+  langId  Int
+  alt     String?
+
+  @@id([imageId, langId])
+  @@index([imageId])
+}
+

@@ -1,0 +1,19 @@
+{
+  "name": "prisma-import-tools",
+  "version": "1.0.0",
+  "packageManager": "yarn@3.3.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "5.45.0",
+    "@typescript-eslint/parser": "5.45.0",
+    "eslint": "8.28.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-unused-imports": "2.0.0",
+    "husky": "8.0.2",
+    "lint-staged": "13.0.4",
+    "prettier": "2.8.0"
+  }
+}

@@ -1,0 +1,143 @@
+import { Currency } from "../geo"
+import { Product } from "../catalog/product"
+
+model ExternalOrder {
+  id                   Int                    @id @default(autoincrement())
+  reference            String                 @unique
+  externalCustomer     ExternalCustomer       @relation(fields: [externalCustomerId], references: [id])
+  externalCustomerId   Int
+  status               ExternalOrderStatus
+  currency             String
+  originalCurrency     Currency?              @relation(fields: [originalCurrencyId], references: [id])
+  originalCurrencyId   Int?
+  totalPaidTaxIncl     Decimal                @db.Decimal(20, 6)
+  totalPaidTaxExcl     Decimal                @db.Decimal(20, 6)
+  totalDiscounts       Decimal                @db.Decimal(20, 6)
+  totalProductsTaxIncl Decimal                @db.Decimal(20, 6)
+  totalProductsTaxExcl Decimal                @db.Decimal(20, 6)
+  totalShippingTaxIncl Decimal                @db.Decimal(20, 6)
+  totalShippingTaxExcl Decimal                @db.Decimal(20, 6)
+  addressDelivery      ExternalAddress?       @relation("AddressDeliveryExternalOrder", fields: [addressDeliveryId], references: [id])
+  addressDeliveryId    Int?
+  addressInvoice       ExternalAddress?       @relation("AddressInvoiceExternalOrder", fields: [addressInvoiceId], references: [id])
+  addressInvoiceId     Int?
+  provider             ExternalOrderProvider  @relation(fields: [providerId], references: [id])
+  providerId           Int
+  createdAt            DateTime
+  updatedAt            DateTime
+  orderDetail          ExternalOrderDetail[]
+  invoice              ExternalOrderInvoice?
+  shipment             ExternalOrderShipment?
+}
+
+model ExternalOrderDetail {
+  id                Int           @id @default(autoincrement())
+  externalOrder     ExternalOrder @relation(fields: [externalOrderId], references: [id])
+  externalOrderId   Int
+  originalProduct   Product?      @relation(fields: [originalProductId], references: [id])
+  originalProductId Int?
+  productName       String
+  productSku        String
+  productQuantity   Int
+  unitPriceTaxIncl  Decimal       @db.Decimal(20, 6)
+  unitPriceTaxExcl  Decimal       @db.Decimal(20, 6)
+  totalPriceTaxIncl Decimal       @db.Decimal(20, 6)
+  totalPriceTaxExcl Decimal       @db.Decimal(20, 6)
+  carrierName       String
+  taxRate           Decimal       @db.Decimal(20, 6)
+  shippingTaxRate   Decimal       @db.Decimal(20, 6)
+}
+
+model ExternalOrderShipment {
+  id                Int           @id @default(autoincrement())
+  order             ExternalOrder @relation(fields: [orderId], references: [id])
+  orderId           Int           @unique
+  sendcloudParcelId Int?
+  shippyProOrderId  String?
+  trackingNumber    String?
+  trackingUrl       String?
+  carrierName       String?
+  announcedAt       DateTime?
+  createdAt         DateTime?
+  updatedAt         DateTime?
+}
+
+model ExternalCustomer {
+  id           Int               @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  fiscalNumber String?
+  vatNumber    String? // Intracommunity VAT number
+  orders       ExternalOrder[]
+  addresses    ExternalAddress[]
+}
+
+model ExternalAddress {
+  id                    Int              @id @default(autoincrement())
+  externalCustomer      ExternalCustomer @relation(fields: [externalCustomerId], references: [id])
+  externalCustomerId    Int
+  firstName             String
+  lastName              String
+  company               String?
+  address1              String
+  address2              String?
+  address3              String?
+  postcode              String
+  city                  String
+  country               String
+  countryIso            String
+  phone                 String
+  email                 String?
+  isProfessional        Boolean?
+  addressDeliveryOrders ExternalOrder[]  @relation("AddressDeliveryExternalOrder")
+  addressInvoiceOrders  ExternalOrder[]  @relation("AddressInvoiceExternalOrder")
+}
+
+model ExternalOrderControl {
+  id         String                     @id @default(uuid())
+  provider   ExternalOrderProvider      @relation(fields: [providerId], references: [id])
+  providerId Int
+  status     ExternalOrderControlStatus
+  meta       String?                    @db.Text
+  startedAt  DateTime
+  finishedAt DateTime?
+}
+
+enum ExternalOrderControlStatus {
+  running
+  completed
+  failed
+}
+
+model ExternalOrderProvider {
+  id       Int                    @id @default(autoincrement())
+  name     String
+  image    String
+  orders   ExternalOrder[]
+  controls ExternalOrderControl[]
+}
+
+enum ExternalOrderStatus {
+  pending
+  preparing
+  shipped
+  rejected
+  refunding
+  refunded
+}
+
+model ExternalOrderInvoice {
+  id                   Int           @id @default(autoincrement())
+  order                ExternalOrder @relation(fields: [orderId], references: [id])
+  orderId              Int           @unique
+  number               Int
+  totalDiscountTaxExcl Decimal       @default(0.000000) @db.Decimal(20, 6)
+  totalDiscountTaxIncl Decimal       @default(0.000000) @db.Decimal(20, 6)
+  totalPaidTaxExcl     Decimal       @default(0.000000) @db.Decimal(20, 6)
+  totalPaidTaxIncl     Decimal       @default(0.000000) @db.Decimal(20, 6)
+  totalProductsTaxExcl Decimal       @default(0.000000) @db.Decimal(20, 6)
+  totalProductsTaxIncl Decimal       @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxExcl Decimal       @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxIncl Decimal       @default(0.000000) @db.Decimal(20, 6)
+  createdAt            DateTime      @default(now())
+}

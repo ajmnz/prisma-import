@@ -1,0 +1,36 @@
+import { Category } from "catalog/category"
+import { Lang } from "geo"
+
+model Menu {
+  id        Int        @id @default(autoincrement())
+  name      String
+  active    Boolean    @default(false)
+  items     MenuItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model MenuItem {
+  id           Int            @id @default(autoincrement())
+  menu         Menu           @relation(fields: [menuId], references: [id])
+  menuId       Int
+  category     Category?      @relation(fields: [categoryId], references: [id])
+  categoryId   Int?
+  isCustomLink Boolean        @default(false)
+  position     Int
+  active       Boolean        @default(true)
+  lang         MenuItemLang[]
+
+  @@unique([menuId, position])
+}
+
+model MenuItemLang {
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId Int
+  lang       Lang     @relation(fields: [langId], references: [id])
+  langId     Int
+  name       String
+  url        String
+
+  @@id([menuItemId, langId])
+}

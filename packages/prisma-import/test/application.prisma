@@ -1,0 +1,10 @@
+model Application {
+  id             Int      @id @default(autoincrement())
+  name           String
+  description    String?
+  username       String   @unique
+  password       String
+  lastActivityAt DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

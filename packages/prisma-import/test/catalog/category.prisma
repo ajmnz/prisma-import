@@ -1,0 +1,46 @@
+import { Product } from "product"
+import { ProductPromotion } from "../cart"
+import { CatalogRewrites } from "catalog"
+import { MenuItem } from "../ui"
+import { Lang } from "../geo"
+
+model Category {
+  id                      Int                @id @default(autoincrement())
+  pimId                   String             @unique
+  parentId                Int?
+  parent                  Category?          @relation("ParentCategory", fields: [parentId], references: [id])
+  children                Category[]         @relation("ParentCategory")
+  depth                   Int
+  position                Int?
+  active                  Boolean            @default(true)
+  coverUri                String?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  products                Product[]
+  defaultCategoryProducts Product[]          @relation("DefaultCategory")
+  lang                    CategoryLang[]
+  menuItem                MenuItem[]
+  rewrites                CatalogRewrites[]
+  promotions              ProductPromotion[]
+
+  @@unique([active, id])
+  @@index([parentId])
+  @@index([depth])
+}
+
+model CategoryLang {
+  category          Category @relation(fields: [categoryId], references: [id])
+  categoryId        Int
+  lang              Lang     @relation(fields: [langId], references: [id])
+  langId            Int
+  name              String
+  linkRewrite       String
+  description       String?
+  secondDescription String?
+  metaTitle         String?
+  metaKeywords      String?
+  metaDescription   String?
+
+  @@id([categoryId, langId])
+  @@index([name])
+}

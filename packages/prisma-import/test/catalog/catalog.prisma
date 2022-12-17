@@ -1,0 +1,25 @@
+import { Lang } from "../geo"
+import { Manufacturer } from "manufacturer"
+import { Category } from "category"
+import { Product } from "product"
+
+model CatalogRewrites {
+  id             Int           @id @default(autoincrement())
+  old            String
+  new            String?
+  permanent      Boolean       @default(true)
+  lang           Lang          @relation(fields: [langId], references: [id])
+  langId         Int
+  product        Product?      @relation(fields: [productId], references: [id])
+  productId      Int?
+  category       Category?     @relation(fields: [categoryId], references: [id])
+  categoryId     Int?
+  manufacturer   Manufacturer? @relation(fields: [manufacturerId], references: [id])
+  manufacturerId Int?
+  hits           Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([old, langId])
+}
+

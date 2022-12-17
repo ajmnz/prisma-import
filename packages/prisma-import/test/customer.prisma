@@ -1,0 +1,131 @@
+import { Reviewer } from "review"
+import { SpecificPrice } from "catalog/product"
+import { Cart, CartRule } from "cart"
+import { Order, Order, OrderReturn, OrderReturn, OrderSlip } from "orders/order"
+import { Lang, Country, State } from "geo"
+
+model Customer {
+  id                    Int             @id @default(autoincrement())
+  gender                Gender          @relation(fields: [genderId], references: [id])
+  genderId              Int             @default(1)
+  lang                  Lang            @relation(fields: [langId], references: [id])
+  langId                Int             @default(1)
+  firstName             String
+  lastName              String
+  email                 String          @unique
+  password              String?
+  lastPasswordGen       DateTime?
+  isGoogleOAuth         Boolean         @default(false)
+  isFacebookOAuth       Boolean         @default(false)
+  newsletter            Boolean         @default(true)
+  resetPasswordToken    String?
+  resetPasswordValidity DateTime?
+  secureKey             String          @default(uuid())
+  lastConnection        DateTime        @default(now())
+  active                Boolean         @default(true)
+  deleted               Boolean         @default(false)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  carts                 Cart[]
+  addresses             Address[]
+  cartRules             CartRule[]
+  specificPrices        SpecificPrice[]
+  orders                Order[]
+  orderReturn           OrderReturn[]
+  orderSlip             OrderSlip[]
+  tokens                Token[]
+  guests                Guest[]
+  reviewer              Reviewer[]
+
+  @@index([email])
+  @@index([email, password])
+  @@index([id, password])
+}
+
+model Gender {
+  id        Int          @id @default(autoincrement())
+  customers Customer[]
+  lang      GenderLang[]
+}
+
+model GenderLang {
+  gender   Gender @relation(fields: [genderId], references: [id])
+  genderId Int
+  lang     Lang   @relation(fields: [langId], references: [id])
+  langId   Int
+  name     String
+
+  @@id([genderId, langId])
+  @@index([genderId])
+}
+
+model Token {
+  id            Int       @id @default(autoincrement())
+  value         String    @unique
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  customerId    Int
+  createdByIp   String?
+  createdAt     DateTime  @default(now())
+  expires       DateTime
+  originTokenId Int?
+  originToken   Token?    @relation("TokenToToken", fields: [originTokenId], references: [id])
+  replaced      Boolean   @default(false)
+  replacedAt    DateTime?
+  Token         Token[]   @relation("TokenToToken")
+}
+
+model Guest {
+  id         String    @id @default(uuid())
+  ipAddress  String?
+  createdAt  DateTime  @default(now())
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  customerId Int?
+  carts      Cart[]
+}
+
+model Address {
+  id                    Int      @id @default(autoincrement())
+  country               Country  @relation(fields: [countryId], references: [id])
+  countryId             Int
+  state                 State?   @relation(fields: [stateId], references: [id])
+  stateId               Int?
+  customer              Customer @relation(fields: [customerId], references: [id])
+  customerId            Int
+  company               String?  @db.VarChar(255)
+  firstName             String   @db.VarChar(255)
+  lastName              String   @db.VarChar(255)
+  address1              String   @db.VarChar(128)
+  address2              String?  @db.VarChar(128)
+  postcode              String
+  city                  String   @db.VarChar(64)
+  phone                 String
+  dniNif                String?  @db.VarChar(16)
+  active                Boolean  @default(true)
+  deleted               Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  addressDeliveryCarts  Cart[]   @relation("AddressDeliveryCart")
+  addressInvoiceCarts   Cart[]   @relation("AddressInvoiceCart")
+  addressDeliveryOrders Order[]  @relation("AddressDeliveryOrder")
+  addressInvoiceOrders  Order[]  @relation("AddressInvoiceOrder")
+
+  @@index([customerId])
+  @@index([countryId])
+  @@index([stateId])
+}
+
+model AddressFormat {
+  country   Country @relation(fields: [countryId], references: [id])
+  countryId Int     @id
+  format    String
+}
+
+model Mail {
+  id        Int      @id @default(autoincrement())
+  recipient String
+  template  String
+  subject   String
+  lang      Lang     @relation(fields: [langId], references: [id])
+  langId    Int
+  createdAt DateTime @default(now())
+}

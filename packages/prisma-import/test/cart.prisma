@@ -1,0 +1,139 @@
+import { Product, ProductGift, SpecificPrice } from "catalog/product"
+import { Carrier } from "carrier"
+import { Address, Customer, Guest } from "customer"
+import { Order, OrderCartRule, OrderPayPal } from "orders/order"
+import { Manufacturer } from "catalog/manufacturer"
+import { Category } from "catalog/category"
+import { Country, Currency, Lang } from "geo"
+
+model Cart {
+  id                Int            @id @default(autoincrement())
+  carrier           Carrier?       @relation(fields: [carrierId], references: [id])
+  carrierId         Int?
+  addressDelivery   Address?       @relation("AddressDeliveryCart", fields: [addressDeliveryId], references: [id])
+  addressDeliveryId Int?
+  addressInvoice    Address?       @relation("AddressInvoiceCart", fields: [addressInvoiceId], references: [id])
+  addressInvoiceId  Int?
+  currency          Currency       @relation(fields: [currencyId], references: [id])
+  currencyId        Int
+  country           Country        @relation(fields: [countryId], references: [id])
+  countryId         Int            @default(6)
+  lang              Lang           @relation(fields: [langId], references: [id])
+  langId            Int            @default(1)
+  customer          Customer?      @relation(fields: [customerId], references: [id])
+  customerId        Int?
+  guest             Guest?         @relation(fields: [guestId], references: [id])
+  guestId           String?
+  secureKey         String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  rules             CartRule[]
+  products          CartProduct[]
+  specificPrices    SpecificPrice?
+  order             Order?
+  paypalOrder       OrderPayPal?
+  gifts             ProductGift[]
+
+  @@index([customerId])
+  @@index([addressDeliveryId])
+  @@index([addressInvoiceId])
+  @@index([carrierId])
+  @@index([currencyId])
+  @@index([countryId])
+}
+
+model CartRule {
+  id                     Int               @id @default(autoincrement())
+  customer               Customer?         @relation(fields: [customerId], references: [id])
+  customerId             Int?
+  validFrom              DateTime // Rule is valid from
+  validTo                DateTime // Rule is valid to
+  description            String? // Internal
+  quantity               Int? // Total available quantity
+  quantityPerUser        Int? // Total uses allowed by customer
+  code                   String // Discount code
+  product                Product?          @relation(fields: [productId], references: [id]) // Restrict to specific product
+  productId              Int?
+  productMinimumQuantity Int? // If restricted, the minimum quantity needed to apply the discount
+  freeShipping           Boolean // Includes free shipping
+  reductionPercent       Decimal?          @db.Decimal(5, 2)
+  reductionAmount        Decimal?          @db.Decimal(20, 6)
+  reductionTax           Boolean // If the reduction specified includes tax or not (only amt.)
+  minimumAmount          Decimal?          @db.Decimal(20, 6) // Minimum amount required for the rule to be applied
+  maximumAmount          Decimal?          @db.Decimal(20, 6) // The maximum amount allowed for the rule to apply
+  limitAmountsCurrency   Currency?         @relation(fields: [limitAmountsCurrencyId], references: [id])
+  limitAmountsCurrencyId Int?
+  limitAmountsTax        Boolean? // If the minimum/maximum amounts are with tax
+  cartRuleRestriction    Boolean // If it cannot be combined with other rules
+  country                Country?          @relation(fields: [countryId], references: [id]) // Country restriction
+  countryId              Int?
+  active                 Boolean
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  promotion              ProductPromotion? @relation(fields: [promotionId], references: [id])
+  promotionId            Int?
+  carts                  Cart[]
+  lang                   CartRuleLang[]
+  orderCartRules         OrderCartRule[]
+
+  @@index([validFrom])
+  @@index([validTo])
+  @@index([code])
+  @@index([customerId, active, validTo])
+}
+
+model CartRuleLang {
+  cartRule   CartRule @relation(fields: [cartRuleId], references: [id])
+  cartRuleId Int
+  lang       Lang     @relation(fields: [langId], references: [id])
+  langId     Int
+  name       String
+
+  @@id([cartRuleId, langId])
+}
+
+model ProductPromotion {
+  id                     Int                       @id @default(autoincrement())
+  name                   String
+  description            String?
+  products               Product[]
+  categories             Category[]
+  manufacturers          Manufacturer[]
+  priority               Int                       @default(1)
+  startsAt               DateTime
+  endsAt                 DateTime
+  codePattern            String
+  quantity               Int?
+  quantityPerUser        Int?
+  minimumAmount          Decimal?                  @db.Decimal(20, 6)
+  maximumAmount          Decimal?                  @db.Decimal(20, 6)
+  limitAmountsCurrency   Currency?                 @relation(fields: [limitAmountsCurrencyId], references: [id])
+  limitAmountsCurrencyId Int?
+  limitAmountsTax        Boolean?
+  reductionPercent       Decimal?                  @db.Decimal(5, 2)
+  reductionAmount        Decimal?                  @db.Decimal(20, 6)
+  reductionTax           Boolean
+  reductionDisplay       PromotionReductionDisplay
+  cartRules              CartRule[]
+  linkRewrite            String?
+  enablePublicPage       Boolean                   @default(false)
+  active                 Boolean                   @default(true)
+  deleted                Boolean                   @default(false)
+}
+
+enum PromotionReductionDisplay {
+  amount
+  percent
+}
+
+model CartProduct {
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  cartId    Int
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  createdAt DateTime @default(now())
+
+  @@id([cartId, productId])
+  @@index([cartId, createdAt, productId])
+}

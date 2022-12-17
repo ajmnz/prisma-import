@@ -1,0 +1,33 @@
+import { Product } from "product"
+import { ProductPromotion } from "../cart"
+import { CatalogRewrites } from "catalog"
+import { Lang } from "../geo"
+
+model Manufacturer {
+  id          Int                @id @default(autoincrement())
+  pimId       String             @unique
+  name        String
+  linkRewrite String
+  active      Boolean            @default(false)
+  logoUri     String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  products    Product[]
+  lang        ManufacturerLang[]
+  rewrites    CatalogRewrites[]
+  promotions  ProductPromotion[]
+}
+
+model ManufacturerLang {
+  manufacturer     Manufacturer @relation(fields: [manufacturerId], references: [id])
+  manufacturerId   Int
+  lang             Lang         @relation(fields: [langId], references: [id])
+  langId           Int
+  description      String?
+  shortDescription String?
+  metaTitle        String?
+  metaKeywords     String?
+  metaDescription  String?
+
+  @@id([manufacturerId, langId])
+}

@@ -1,0 +1,397 @@
+import { Lang, Currency } from "../geo"
+import { Product, ProductGift } from "../catalog/product"
+import { ProductReview, ServiceReview } from "../review"
+import { Cart, CartRule } from "../cart"
+import { Customer, Address } from "../customer"
+import { Carrier } from "../carrier"
+import { Employee } from "../admin"
+
+model Order {
+  id                    Int         @id @default(autoincrement())
+  reference             String      @unique @db.VarChar(9)
+  carrier               Carrier?    @relation(fields: [carrierId], references: [id])
+  carrierId             Int?
+  lang                  Lang        @relation(fields: [langId], references: [id])
+  langId                Int
+  customer              Customer    @relation(fields: [customerId], references: [id])
+  customerId            Int
+  cart                  Cart        @relation(fields: [cartId], references: [id], map: "Order_cartId_fkey")
+  cartId                Int         @unique
+  secureKey             String?
+  currency              Currency    @relation(fields: [currencyId], references: [id])
+  currencyId            Int
+  addressDelivery       Address?    @relation("AddressDeliveryOrder", fields: [addressDeliveryId], references: [id])
+  addressDeliveryId     Int?
+  addressInvoice        Address?    @relation("AddressInvoiceOrder", fields: [addressInvoiceId], references: [id])
+  addressInvoiceId      Int?
+  orderStatus           OrderStatus @relation(fields: [orderStatusId], references: [id])
+  orderStatusId         Int
+  payment               String      @db.VarChar(255)
+  shippingNumber        String?     @db.VarChar(64)
+  totalDiscounts        Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalDiscountsTaxIncl Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalDiscountsTaxExcl Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalPaid             Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalPaidTaxIncl      Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalPaidTaxExcl      Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalPaidReal         Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalProducts         Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalProductsTaxIncl  Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalShipping         Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxIncl  Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxExcl  Decimal     @default(0.000000) @db.Decimal(20, 6)
+  carrierTaxRate        Decimal     @default(0.000) @db.Decimal(10, 3)
+  invoiceNumber         Int?
+  deliveryNumber        Int?
+  invoiceDate           DateTime?
+  deliveryDate          DateTime?
+  maximumDeliveryDate   DateTime?
+  valid                 Boolean     @default(false) // Awaiting wire transfer
+  hasSeenConfirmation   Boolean     @default(false)
+  tpInviteRequested     Boolean     @default(false)
+  warnings              String[]
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  orderCarrier        OrderCarrier[]
+  orderInvoice        OrderInvoice[]
+  orderCartRule       OrderCartRule[]
+  orderDetail         OrderDetail[]
+  orderInvoicePayment OrderInvoicePayment[]
+  orderReturn         OrderReturn[]
+  orderSlip           OrderSlip[]
+  orderHistory        OrderHistory[]
+  orderPayment        OrderPayment[]
+  paypalOrder         OrderPayPal?
+  productReviews      ProductReview[]
+  ServiceReview       ServiceReview[]
+  gifts               ProductGift[]
+
+  @@index([orderStatusId])
+  @@index([createdAt])
+  @@index([addressDeliveryId])
+  @@index([addressInvoiceId])
+  @@index([carrierId])
+  @@index([cartId])
+  @@index([currencyId])
+  @@index([customerId])
+  @@index([langId])
+  @@index([invoiceNumber])
+  @@index([reference])
+}
+
+model OrderStatus {
+  id           Int               @id @default(autoincrement())
+  invoice      Boolean           @default(false)
+  sendEmail    Boolean           @default(false)
+  color        String?           @db.VarChar(32)
+  unremovable  Boolean
+  hidden       Boolean           @default(false)
+  logable      Boolean           @default(false)
+  delivery     Boolean           @default(false)
+  shipped      Boolean           @default(false)
+  paid         Boolean           @default(false)
+  pdfInvoice   Boolean           @default(false)
+  pdfDelivery  Boolean           @default(false)
+  deleted      Boolean           @default(false)
+  step         OrderStatusStep   @default(waiting)
+  lang         OrderStatusLang[]
+  orders       Order[]
+  orderHistory OrderHistory[]
+}
+
+enum OrderStatusStep {
+  error
+  aborted
+  waiting
+  accepted
+  preparing
+  shipped
+  delivered
+}
+
+model OrderStatusLang {
+  orderStatus   OrderStatus         @relation(fields: [orderStatusId], references: [id])
+  orderStatusId Int
+  lang          Lang                @relation(fields: [langId], references: [id])
+  langId        Int
+  name          String              @db.VarChar(64)
+  template      OrderEmailTemplate?
+
+  @@id([orderStatusId, langId])
+}
+
+enum OrderEmailTemplate {
+  cancelled
+  bankwire
+  paymentError
+  refund
+  payment
+}
+
+model OrderCarrier {
+  id                  Int           @id @default(autoincrement())
+  order               Order         @relation(fields: [orderId], references: [id])
+  orderId             Int
+  carrier             Carrier?      @relation(fields: [carrierId], references: [id])
+  carrierId           Int?
+  orderInvoice        OrderInvoice? @relation(fields: [orderInvoiceId], references: [id])
+  orderInvoiceId      Int?
+  weight              Decimal?      @db.Decimal(20, 6)
+  shippingCostTaxExcl Decimal?      @db.Decimal(20, 6)
+  shippingCostTaxIncl Decimal?      @db.Decimal(20, 6)
+  trackingNumber      String?       @db.VarChar(250)
+  trackingUrl         String?
+  sendcloudParcelId   String?
+  shippyProOrderId    String?
+  createdAt           DateTime      @default(now())
+
+  @@index([carrierId])
+  @@index([orderId])
+  @@index([orderInvoiceId])
+}
+
+model OrderInvoice {
+  id                   Int                   @id @default(autoincrement())
+  order                Order                 @relation(fields: [orderId], references: [id])
+  orderId              Int
+  number               Int                   @unique
+  deliveryNumber       Int?
+  deliveryDate         DateTime?
+  totalDiscountTaxExcl Decimal               @default(0.000000) @db.Decimal(20, 6)
+  totalDiscountTaxIncl Decimal               @default(0.000000) @db.Decimal(20, 6)
+  totalPaidTaxExcl     Decimal               @default(0.000000) @db.Decimal(20, 6)
+  totalPaidTaxIncl     Decimal               @default(0.000000) @db.Decimal(20, 6)
+  totalProducts        Decimal               @default(0.000000) @db.Decimal(20, 6)
+  totalProductsTaxIncl Decimal               @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxExcl Decimal               @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxIncl Decimal               @default(0.000000) @db.Decimal(20, 6)
+  createdAt            DateTime              @default(now())
+  orderCarrier         OrderCarrier[]
+  orderCartRule        OrderCartRule[]
+  orderDetail          OrderDetail[]
+  orderInvoicePayment  OrderInvoicePayment[]
+  orderInvoiceTax      OrderInvoiceTax[]
+
+  @@index([orderId])
+}
+
+model OrderInvoicePayment {
+  orderInvoice   OrderInvoice @relation(fields: [orderInvoiceId], references: [id])
+  orderInvoiceId Int
+  orderPayment   OrderPayment @relation(fields: [orderPaymentId], references: [id])
+  orderPaymentId Int
+  order          Order        @relation(fields: [orderId], references: [id])
+  orderId        Int
+
+  @@id([orderInvoiceId, orderPaymentId])
+  @@index([orderId])
+  @@index([orderPaymentId])
+}
+
+// Shipping tax only
+model OrderInvoiceTax {
+  orderInvoice   OrderInvoice @relation(fields: [orderInvoiceId], references: [id])
+  orderInvoiceId Int
+  type           String       @db.VarChar(15)
+  amount         Decimal      @default(0.000000) @db.Decimal(10, 6)
+
+  @@id([orderInvoiceId])
+}
+
+// Orders that used discounts
+model OrderCartRule {
+  id             Int           @id @default(autoincrement())
+  order          Order         @relation(fields: [orderId], references: [id])
+  orderId        Int
+  cartRule       CartRule?     @relation(fields: [cartRuleId], references: [id])
+  cartRuleId     Int?
+  orderInvoice   OrderInvoice? @relation(fields: [orderInvoiceId], references: [id])
+  orderInvoiceId Int?
+  name           String        @db.VarChar(254)
+  value          Decimal       @default(0.00) @db.Decimal(17, 2)
+  valueTaxExcl   Decimal       @default(0.00) @db.Decimal(17, 2)
+  freeShipping   Boolean       @default(false)
+
+  @@index([cartRuleId])
+  @@index([orderId])
+}
+
+model OrderDetail {
+  id                      Int                 @id @default(autoincrement())
+  order                   Order               @relation(fields: [orderId], references: [id])
+  orderId                 Int
+  orderInvoice            OrderInvoice?       @relation(fields: [orderInvoiceId], references: [id])
+  orderInvoiceId          Int?
+  product                 Product?            @relation(fields: [productId], references: [id])
+  productId               Int?
+  productName             String              @db.VarChar(255)
+  productQuantity         Int                 @default(0)
+  productQuantityInStock  Int                 @default(0)
+  productQuantityRefunded Int                 @default(0)
+  productQuantityReturn   Int                 @default(0)
+  productPrice            Decimal             @default(0.000000) @db.Decimal(20, 6)
+  reductionPercent        Decimal             @default(0.00) @db.Decimal(10, 2)
+  productQuantityDiscount Decimal             @default(0.000000) @db.Decimal(20, 6)
+  productEan13            String?
+  productReference        String?
+  productSku              String?
+  productWeight           Decimal             @db.Decimal(20, 6)
+  totalPriceTaxIncl       Decimal             @default(0.000000) @db.Decimal(20, 6)
+  totalPriceTaxExcl       Decimal             @default(0.000000) @db.Decimal(20, 6)
+  unitPriceTaxIncl        Decimal             @default(0.000000) @db.Decimal(20, 6)
+  unitPriceTaxExcl        Decimal             @default(0.000000) @db.Decimal(20, 6)
+  originalProductPrice    Decimal             @default(0.000000) @db.Decimal(20, 6)
+  orderDetailTax          OrderDetailTax?
+  orderReturnDetail       OrderReturnDetail[]
+  orderSlipDetail         OrderSlipDetail[]
+
+  @@index([orderId, id])
+  @@index([orderId])
+}
+
+// tax per product and total (product tax * product quantity)
+model OrderDetailTax {
+  orderDetail   OrderDetail @relation(fields: [orderDetailId], references: [id])
+  orderDetailId Int
+  unitAmount    Decimal     @default(0.000000) @db.Decimal(16, 6)
+  totalAmount   Decimal     @default(0.000000) @db.Decimal(16, 6)
+
+  @@id([orderDetailId])
+  @@index([orderDetailId])
+}
+
+model OrderPayment {
+  id                  Int                   @id @default(autoincrement())
+  orderReference      String?               @db.VarChar(9)
+  order               Order?                @relation(fields: [orderReference], references: [reference])
+  currency            Currency              @relation(fields: [currencyId], references: [id])
+  currencyId          Int
+  amount              Decimal               @db.Decimal(10, 2)
+  paymentMethod       String                @db.VarChar(255)
+  transactionId       String?               @db.VarChar(254)
+  createdAt           DateTime              @default(now())
+  orderInvoicePayment OrderInvoicePayment[]
+
+  @@index([orderReference])
+}
+
+model OrderPayPal {
+  id            Int      @id @default(autoincrement())
+  cart          Cart     @relation(fields: [cartId], references: [id])
+  cartId        Int      @unique
+  order         Order    @relation(fields: [orderId], references: [id])
+  orderId       Int      @unique
+  totalPaid     Decimal  @default(0.000000) @db.Decimal(16, 6)
+  taxRate       Decimal  @db.Decimal(16, 6)
+  fee           Decimal  @db.Decimal(16, 6)
+  grossAmount   Decimal? @db.Decimal(16, 6)
+  realFee       Decimal? @db.Decimal(16, 6)
+  netAmount     Decimal? @db.Decimal(16, 6)
+  transactionId String
+  payerId       String
+}
+
+// Devolucions de mercaderies
+model OrderReturn {
+  id                  Int                 @id @default(autoincrement())
+  customer            Customer            @relation(fields: [customerId], references: [id])
+  customerId          Int
+  order               Order               @relation(fields: [orderId], references: [id])
+  orderId             Int
+  orderReturnStatus   OrderReturnStatus   @relation(fields: [orderReturnStatusId], references: [id])
+  orderReturnStatusId Int
+  question            String              @db.Text
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  orderReturnDetail   OrderReturnDetail[]
+
+  @@index([orderId])
+  @@index([customerId])
+}
+
+model OrderReturnDetail {
+  orderReturn     OrderReturn @relation(fields: [orderReturnId], references: [id])
+  orderReturnId   Int
+  orderDetail     OrderDetail @relation(fields: [orderDetailId], references: [id])
+  orderDetailId   Int
+  productQuantity Int         @default(0)
+
+  @@id([orderReturnId, orderDetailId])
+}
+
+model OrderReturnStatus {
+  id          Int                     @id @default(autoincrement())
+  color       String?                 @db.VarChar(32)
+  lang        OrderReturnStatusLang[]
+  orderReturn OrderReturn[]
+}
+
+model OrderReturnStatusLang {
+  orderReturnStatus   OrderReturnStatus @relation(fields: [orderReturnStatusId], references: [id])
+  orderReturnStatusId Int
+  lang                Lang              @relation(fields: [langId], references: [id])
+  langId              Int
+  name                String            @db.VarChar(64)
+
+  @@id([orderReturnStatusId, langId])
+}
+
+model OrderSlip {
+  id                   Int               @id @default(autoincrement())
+  customer             Customer          @relation(fields: [customerId], references: [id])
+  customerId           Int
+  order                Order             @relation(fields: [orderId], references: [id])
+  orderId              Int
+  totalProductsTaxExcl Decimal           @default(0.000000) @db.Decimal(20, 6)
+  totalProductsTaxIncl Decimal           @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxExcl Decimal           @default(0.000000) @db.Decimal(20, 6)
+  totalShippingTaxIncl Decimal           @default(0.000000) @db.Decimal(20, 6)
+  freeShipping         Boolean           @default(false)
+  shippingCostAmount   Decimal           @db.Decimal(10, 2)
+  amount               Decimal           @db.Decimal(10, 2)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  type                 OrderSlipType
+  detail               OrderSlipDetail[]
+
+  @@index([orderId])
+  @@index([customerId])
+}
+
+enum OrderSlipType {
+  // Based on product prices
+  productPrices
+  // Based on product prices, but do not refund the voucher amount
+  excludeVoucher
+  // Refund amount manually specified
+  specificAmount
+}
+
+model OrderSlipDetail {
+  orderSlip         OrderSlip   @relation(fields: [orderSlipId], references: [id])
+  orderSlipId       Int
+  orderDetail       OrderDetail @relation(fields: [orderDetailId], references: [id])
+  orderDetailId     Int
+  productQuantity   Int         @default(0)
+  unitPriceTaxExcl  Decimal     @default(0.000000) @db.Decimal(20, 6)
+  unitPriceTaxIncl  Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalPriceTaxExcl Decimal     @default(0.000000) @db.Decimal(20, 6)
+  totalPriceTaxIncl Decimal     @default(0.000000) @db.Decimal(20, 6)
+  amountTaxExcl     Decimal     @default(0.000000) @db.Decimal(10, 2)
+  amountTaxIncl     Decimal     @default(0.000000) @db.Decimal(10, 2)
+
+  @@id([orderSlipId, orderDetailId])
+}
+
+model OrderHistory {
+  id            Int         @id @default(autoincrement())
+  employee      Employee?   @relation(fields: [employeeId], references: [id])
+  employeeId    Int?
+  order         Order       @relation(fields: [orderId], references: [id])
+  orderId       Int
+  orderStatus   OrderStatus @relation(fields: [orderStatusId], references: [id])
+  orderStatusId Int
+  createdAt     DateTime    @default(now())
+}
+

@@ -1,0 +1,50 @@
+import { Product } from "catalog/product"
+import { Customer } from "customer"
+import { Lang } from "geo"
+import { Order } from "orders/order"
+
+model Reviewer {
+  id             String          @id @unique
+  name           String
+  customer       Customer?       @relation(fields: [customerId], references: [id])
+  customerId     Int?            @unique
+  productReviews ProductReview[]
+  serviceReviews ServiceReview[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model ProductReview {
+  id          String   @id @unique
+  stars       Int
+  content     String
+  attachments String[]
+  product     Product  @relation(fields: [productId], references: [id])
+  productId   Int
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     Int
+  reviewer    Reviewer @relation(fields: [reviewerId], references: [id])
+  reviewerId  String
+  lang        Lang     @relation(fields: [langId], references: [id])
+  langId      Int
+  createdAt   DateTime
+  updatedAt   DateTime
+}
+
+model ServiceReview {
+  id         String    @id @unique
+  stars      Int
+  title      String
+  content    String
+  reply      String?
+  repliedAt  DateTime?
+  featured   Boolean   @default(false)
+  order      Order?    @relation(fields: [orderId], references: [id])
+  orderId    Int?
+  reviewer   Reviewer  @relation(fields: [reviewerId], references: [id])
+  reviewerId String
+  lang       Lang      @relation(fields: [langId], references: [id])
+  langId     Int
+  createdAt  DateTime
+  updatedAt  DateTime
+}

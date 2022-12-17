@@ -1,0 +1,177 @@
+import { Address, AddressFormat, GenderLang, Customer, Mail } from "customer"
+import { CatalogRewrites } from "catalog/catalog"
+import { ProductReview, ServiceReview } from "review"
+import { MenuItemLang } from "ui"
+import { ManufacturerLang } from "catalog/manufacturer"
+import { CategoryLang } from "catalog/category"
+import { Attachment, FeatureLang, FeatureValueLang, ImageLang, ProductHandling, ProductLang } from "catalog/product"
+import { ExternalOrder } from "orders/external-order"
+import { Cart, CartRule, CartRuleLang, ProductPromotion } from "cart"
+import { Order, OrderPayment, OrderStatusLang, OrderReturnStatusLang } from "orders/order"
+import { Carrier, CarrierLang } from "carrier"
+
+model Country {
+  id            Int             @id @default(autoincrement())
+  zone          Zone            @relation(fields: [zoneId], references: [id])
+  zoneId        Int
+  currency      Currency        @relation(fields: [currencyId], references: [id])
+  currencyId    Int             @default(1)
+  isoCode       String          @unique
+  callPrefix    Int
+  active        Boolean
+  hasStates     Boolean         @default(false)
+  needsIdNumber Boolean         @default(false)
+  needsZipCode  Boolean         @default(true)
+  zipCodeFormat String?
+  states        State[]
+  addresses     Address[]
+  lang          CountryLang[]
+  addressFormat AddressFormat[]
+  taxRules      TaxRule[]
+  carriers      Carrier[]
+  countryGroups CountryGroup[]
+  cart          Cart[]
+  CartRule      CartRule[]
+
+  @@index([zoneId])
+  @@index([isoCode])
+}
+
+model CountryLang {
+  country   Country @relation(fields: [countryId], references: [id])
+  countryId Int
+  lang      Lang    @relation(fields: [langId], references: [id])
+  langId    Int
+  name      String
+
+  @@id([countryId, langId])
+  @@unique([countryId, langId])
+}
+
+// The shop can consider that some countries are equal and thus
+// can have share properties, models, etc.
+//
+// For example, if France and Spain are on the same group, a cart created
+// when visiting the site on Spain will still be valid if the location is
+// switched to French
+
+model CountryGroup {
+  id        Int       @id @default(autoincrement())
+  name      String
+  countries Country[]
+}
+
+model Tax {
+  id      Int       @id @default(autoincrement())
+  rate    Decimal   @db.Decimal(10, 3)
+  active  Boolean   @default(true)
+  deleted Boolean   @default(false)
+  lang    TaxLang[]
+  taxRule TaxRule[]
+}
+
+model TaxLang {
+  tax    Tax    @relation(fields: [taxId], references: [id])
+  taxId  Int
+  lang   Lang   @relation(fields: [langId], references: [id])
+  langId Int
+  name   String
+
+  @@id([taxId, langId])
+}
+
+// Specifies tax rules for each country/state
+model TaxRule {
+  id        Int     @id @default(autoincrement())
+  country   Country @relation(fields: [countryId], references: [id])
+  countryId Int
+  state     State?  @relation(fields: [stateId], references: [id])
+  stateId   Int?    @unique
+  tax       Tax     @relation(fields: [taxId], references: [id])
+  taxId     Int
+
+  @@index([countryId, stateId], name: "category_getproducts")
+  @@index([taxId], name: "taxId")
+}
+
+model State {
+  id        Int       @id @default(autoincrement())
+  countryId Int
+  country   Country   @relation(fields: [countryId], references: [id])
+  name      String
+  isoCode   String
+  active    Boolean   @default(false)
+  addresses Address[]
+  taxRule   TaxRule?
+
+  @@index([countryId])
+  @@index([name])
+}
+
+model Zone {
+  id        Int       @id @default(autoincrement())
+  name      String
+  active    Boolean   @default(false)
+  countries Country[]
+  carriers  Carrier[]
+}
+
+model Currency {
+  id             Int                @id @default(autoincrement())
+  name           String
+  symbol         String
+  isoCode        String
+  numericIsoCode String
+  precision      Int
+  conversionRate Decimal            @db.Decimal(13, 6)
+  active         Boolean
+  deleted        Boolean            @default(false)
+  countries      Country[]
+  carts          Cart[]
+  orders         Order[]
+  orderPayment   OrderPayment[]
+  externalOrder  ExternalOrder[]
+  CartRule       CartRule[]
+  promotions     ProductPromotion[]
+
+  @@index([isoCode])
+}
+
+model Lang {
+  id                    Int                     @id @default(autoincrement())
+  name                  String
+  pimLocale             String                  @unique
+  active                Boolean
+  isoCode               String
+  languageCode          String
+  locale                String
+  dateFormatLite        String
+  dateFormatFull        String
+  isRTL                 Boolean
+  domain                String
+  GenderLang            GenderLang[]
+  CarrierLang           CarrierLang[]
+  CountryLang           CountryLang[]
+  CartRuleLang          CartRuleLang[]
+  Customer              Customer[]
+  ProductLang           ProductLang[]
+  CategoryLang          CategoryLang[]
+  ManufacturerLang      ManufacturerLang[]
+  FeatureValueLang      FeatureValueLang[]
+  FeatureLang           FeatureLang[]
+  Mail                  Mail[]
+  Order                 Order[]
+  OrderStatusLang       OrderStatusLang[]
+  ImageLang             ImageLang[]
+  OrderReturnStatusLang OrderReturnStatusLang[]
+  TaxLang               TaxLang[]
+  MenuItemLang          MenuItemLang[]
+  Cart                  Cart[]
+  Attachment            Attachment[]
+  ProductHandling       ProductHandling[]
+  ProductReview         ProductReview[]
+  CatalogRewrites       CatalogRewrites[]
+  ServiceReview         ServiceReview[]
+  ProductGiftLang       ProductGiftLang[]
+}
+

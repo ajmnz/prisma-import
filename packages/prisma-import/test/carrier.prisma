@@ -1,0 +1,45 @@
+import { Zone, Country, Lang } from "geo"
+import { Cart } from "cart"
+import { Order, OrderCarrier } from "orders/order"
+
+model Carrier {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(64)
+  url          String?
+  position     Int            @default(0)
+  zone         Zone           @relation(fields: [zoneId], references: [id])
+  zoneId       Int
+  country      Country?       @relation(fields: [countryId], references: [id])
+  countryId    Int?
+  active       Boolean        @default(true)
+  deleted      Boolean        @default(true)
+  carts        Cart[]
+  lang         CarrierLang[]
+  orders       Order[]
+  orderCarrier OrderCarrier[]
+  rangePrices  RangePrice[]
+
+  @@index([deleted, active])
+}
+
+model CarrierLang {
+  carrier   Carrier @relation(fields: [carrierId], references: [id])
+  carrierId Int
+  lang      Lang    @relation(fields: [langId], references: [id])
+  langId    Int
+  delay     String?
+
+  @@id([carrierId, langId])
+  @@index([carrierId])
+}
+
+model RangePrice {
+  id         Int     @id @default(autoincrement())
+  carrier    Carrier @relation(fields: [carrierId], references: [id])
+  carrierId  Int
+  delimiter1 Decimal @db.Decimal(20, 6)
+  delimiter2 Decimal @db.Decimal(20, 6)
+  price      Decimal @db.Decimal(20, 6)
+
+  @@unique([carrierId, delimiter1, delimiter2])
+}

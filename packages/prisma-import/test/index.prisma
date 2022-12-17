@@ -1,0 +1,16 @@
+datasource db {
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["extendedWhereUnique"]
+  output          = "./generated"
+}
+
+generator enum {
+  provider = "node ../../node_modules/prisma-enum-generator"
+  output   = "./"
+}
+
