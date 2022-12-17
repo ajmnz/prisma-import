@@ -14,6 +14,23 @@
     "eslint-plugin-unused-imports": "2.0.0",
     "husky": "8.0.2",
     "lint-staged": "13.0.4",
+    "pinst": ">=2",
     "prettier": "2.8.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{html,css,less,ejs}": [
+      "prettier --write"
+    ],
+    "*.js": "eslint --cache --fix",
+    "*.{js,css,md}": "prettier --write"
+  },
+  "scripts": {
+    "postinstall": "husky install",
+    "prepublishOnly": "pinst --disable",
+    "postpublish": "pinst --enable"
   }
 }
