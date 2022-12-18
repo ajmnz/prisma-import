@@ -10,6 +10,15 @@
 
 <hr>
 
+- [Description](#description)
+  - [VSCode Extension \& Language Server](#vscode-extension--language-server)
+  - [CLI](#cli)
+- [Usage](#usage)
+- [Import syntax](#import-syntax)
+- [How it works](#how-it-works)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Description
 
 `prisma-import` exists in order to address the [multiple-schema situation](https://github.com/prisma/prisma/issues/2377) on Prisma. Current solutions only focus on the schema merging part, and not on good DX and integration within the Prisma ecosystem.
@@ -245,6 +254,10 @@ To document
 
 - How does the extension resolve errors in the virtual schema
 - How does the extension format across schemas
+
+## Contributing
+
+All aspects of this project are open to contributions. Feel free to open PRs for bug fixes, improvements and new features.
 
 ## License
 
