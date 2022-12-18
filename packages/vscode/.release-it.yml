@@ -1,0 +1,10 @@
+git:
+  tag: false
+  commitMessage: 'release prisma-import extension v${version}'
+github:
+  release: false
+npm:
+  publish: false
+hooks:
+  before:init:
+    - npm run test

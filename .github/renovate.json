@@ -1,0 +1,31 @@
+{
+  "extends": ["config:base", ":disableRateLimiting"],
+  "schedule": ["on the first day of the month"],
+  "semanticCommits": "enabled",
+  "baseBranches": ["main"],
+  "rebaseWhen": "conflicted",
+  "dependencyDashboard": true,
+  "packageRules": [
+    {
+      "groupName": "devDependencies (non-major)",
+      "automerge": "true",
+      "depTypeList": ["devDependencies"],
+      "updateTypes": ["patch", "minor"],
+      "automergeStrategy": "squash",
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchDepTypes": ["devDependencies"]
+    },
+    {
+      "groupName": "dependencies (non-major)",
+      "depTypeList": ["dependencies"],
+      "updateTypes": ["patch", "minor"]
+    },
+    {
+      "groupName": "definitelyTyped",
+      "automerge": "true",
+      "packagePatterns": ["^@types/"],
+      "updateTypes": ["patch", "minor"],
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ]
+}

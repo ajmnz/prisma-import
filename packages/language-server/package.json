@@ -1,0 +1,68 @@
+{
+  "name": "@ajmnz/prisma-language-server",
+  "description": "Prisma Language Server",
+  "displayName": "Prisma Language Server",
+  "author": "Arnau Jiménez",
+  "version": "1.0.5",
+  "license": "Apache-2.0",
+  "publisher": "ajmnz",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "prisma": {
+    "enginesVersion": "5be62d4c40defb9d2faf09dc30edaa449580d417",
+    "cliVersion": "4.8.0-dev.21"
+  },
+  "bin": "dist/src/bin.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ajmnz/prisma-import.git",
+    "directory": "packages/language-server"
+  },
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "watch": "npm run build -- -w",
+    "test": "nyc --reporter=clover --reporter=text-summary mocha --ui tdd --useColors true  ./dist/src/__test__/**/*.test.js",
+    "pretest": "tsc",
+    "release": "release-it --"
+  },
+  "main": "./dist/index.js",
+  "typings": "dist/src/index",
+  "dependencies": {
+    "@prisma/prisma-fmt-wasm": "4.8.0-9.5be62d4c40defb9d2faf09dc30edaa449580d417",
+    "@types/js-levenshtein": "1.1.1",
+    "js-levenshtein": "1.1.6",
+    "klona": "2.0.5",
+    "nyc": "15.1.0",
+    "vscode-languageserver": "8.0.2",
+    "vscode-languageserver-textdocument": "1.0.7"
+  },
+  "devDependencies": {
+    "@types/mocha": "10.0.1",
+    "@types/node": "14.18.33",
+    "mocha": "10.1.0",
+    "release-it": "15.5.1",
+    "rimraf": "3.0.2",
+    "ts-dedent": "2.2.0",
+    "typescript": "4.9.3"
+  },
+  "keywords": [
+    "autocomplete",
+    "intellisense",
+    "language",
+    "prisma",
+    "server",
+    "formatting",
+    "linting",
+    "prisma import"
+  ],
+  "bugs": {
+    "url": "https://github.com/ajmnz/prisma-import/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

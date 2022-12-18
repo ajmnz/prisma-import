@@ -1,0 +1,10 @@
+model Model {
+  id Int @id
+  role Role @default(A_VARIANT_WITH_UNDERSCORES)
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  A_VARIANT_WITH_UNDERSCORES
+}

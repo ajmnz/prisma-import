@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Album {
+  AlbumId  Int     @default(autoincrement()) @id
+  ArtistId Int
+  Title    String
+  Artist   Artist  @relation(fields: [ArtistId], references: [ArtistId])
+  Tracks   Track[]
+
+  @@index([ArtistId], name: "IFK_AlbumArtistId")
+}
+
+model Artist {
+  ArtistId Int     @default(autoincrement()) @id
+  Name     String?
+  Albums   Album[]
+}
+
+model Customer {
+  Address      String?
+  City         String?
+  Company      String?
+  Country      String?
+  CustomerId   Int       @default(autoincrement()) @id
+  Email        String
+  Fax          String?
+  FirstName    String
+  LastName     String
+  Phone        String?
+  PostalCode   String?
+  State        String?
+  SupportRepId Int?
+  SupportRep   Employee? @relation(fields: [SupportRepId], references: [EmployeeId])
+  Invoices     Invoice[]
+
+  @@index([SupportRepId], name: "IFK_CustomerSupportRepId")
+}
+
+model Employee {
+  Address     String?
+  BirthDate   DateTime?
+  City        String?
+  Country     String?
+  Email       String?
+  EmployeeId  Int        @default(autoincrement()) @id
+  Fax         String?
+  FirstName   String
+  HireDate    DateTime?
+  LastName    String
+  Phone       String?
+  PostalCode  String?
+  ReportsToId Int?       @map("ReportsTo")
+  State       String?
+  Title       String?
+  ReportsTo   Employee?  @relation("EmployeeToEmployee_ReportsTo", fields: [ReportsToId], references: [EmployeeId])
+  Employees   Employee[] @relation("EmployeeToEmployee_ReportsTo")
+  Customers   Customer[]
+
+  @@index([ReportsToId], name: "IFK_EmployeeReportsTo")
+}
+
+model Genre {
+  GenreId Int     @default(autoincrement()) @id
+  Name    String?
+  Tracks  Track[]
+}
+
+model Invoice {
+  BillingAddress    String?
+  BillingCity       String?
+  BillingCountry    String?
+  BillingPostalCode String?
+  BillingState      String?
+  CustomerId        Int
+  InvoiceDate       DateTime
+  InvoiceId         Int           @default(autoincrement()) @id
+  Total             Float
+  Customer          Customer      @relation(fields: [CustomerId], references: [CustomerId])
+  InvoiceLines      InvoiceLine[]
+
+  @@index([CustomerId], name: "IFK_InvoiceCustomerId")
+}
+
+model InvoiceLine {
+  InvoiceId     Int
+  InvoiceLineId Int     @default(autoincrement()) @id
+  Quantity      Int
+  TrackId       Int
+  UnitPrice     Float
+  Invoice       Invoice @relation(fields: [InvoiceId], references: [InvoiceId])
+  Track         Track   @relation(fields: [TrackId], references: [TrackId])
+
+  @@index([InvoiceId], name: "IFK_InvoiceLineInvoiceId")
+  @@index([TrackId], name: "IFK_InvoiceLineTrackId")
+}
+
+model MediaType {
+  MediaTypeId Int     @default(autoincrement()) @id
+  Name        String?
+  Tracks      Track[]
+}
+
+model Playlist {
+  Name           String?
+  PlaylistId     Int             @default(autoincrement()) @id
+  PlaylistTracks PlaylistTrack[]
+}
+
+model PlaylistTrack {
+  Id         Int      @default(autoincrement()) @id
+  PlaylistId Int
+  TrackId    Int
+  Playlist   Playlist @relation(fields: [PlaylistId], references: [PlaylistId])
+  Track      Track    @relation(fields: [TrackId], references: [TrackId])
+
+  @@index([TrackId], name: "IFK_PlaylistTrackTrackId")
+  @@unique([PlaylistId, TrackId], name: "Unique_PlaylistTrack")
+}
+
+model Track {
+  AlbumId        Int?
+  Bytes          Int?
+  Composer       String?
+  GenreId        Int?
+  MediaTypeId    Int
+  Milliseconds   Int
+  Name           String
+  TrackId        Int             @default(autoincrement()) @id
+  UnitPrice      Float
+  Album          String?          
+  Genre          Genre?          @relation(fields: [GenreId], references: [GenreId])
+  MediaType      MediaType       @relation(fields: [MediaTypeId], references: [MediaTypeId])
+  InvoiceLines   InvoiceLine[]
+  PlaylistTracks PlaylistTrack[]
+
+  @@index([AlbumId], name: "IFK_TrackAlbumId")
+  @@index([GenreId], name: "IFK_TrackGenreId")
+  @@index([MediaTypeId], name: "IFK_TrackMediaTypeId")
+}

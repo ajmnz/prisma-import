@@ -1,0 +1,71 @@
+// A launch configuration that launches the extension inside a new window
+// Use IntelliSense to learn about possible attributes.
+// Hover to view descriptions of existing attributes.
+// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch VSCode extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "sourceMaps": true,
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/packages/vscode", "--disable-extensions"],
+      "outFiles": ["${workspaceFolder}/packages/vscode/dist/**/*.js"],
+      "env": {
+        "VSCODE_DEBUG_MODE": "true"
+      }
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server",
+      "port": 6009,
+      "restart": true,
+      "timeout": 50000,
+      "outFiles": ["${workspaceFolder}/packages/language-server/dist/**/*.js"]
+    },
+    {
+      "name": "Run Language Server Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/packages/language-server/node_modules/mocha/bin/_mocha",
+      "stopOnEntry": false,
+      "args": [
+        "--timeout",
+        "999999",
+        "--colors",
+        "--ui",
+        "tdd",
+        "--useColors",
+        "true",
+        "./dist/src/__test__/**/*.test.js"
+      ],
+      "cwd": "${workspaceRoot}/packages/language-server",
+      "runtimeExecutable": null,
+      "runtimeArgs": [],
+      "env": {},
+      "outFiles": ["${workspaceRoot}/packages/language-server/dist/src/__test__/**/*.js"],
+      "preLaunchTask": "npm: watch"
+    },
+    {
+      "name": "Run VS Code Tests",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode",
+        "--extensionTestsPath=${workspaceFolder}/packages/vscode/dist/src/__test__/index",
+        "${workspaceFolder}/packages/vscode/fixtures"
+      ],
+      "outFiles": ["${workspaceFolder}/packages/vscode/dist/src/__test__/**/*.js"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "VSCode + Language Server",
+      "configurations": ["Launch VSCode extension", "Attach to Server"]
+    }
+  ]
+}

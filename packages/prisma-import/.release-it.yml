@@ -1,0 +1,12 @@
+git:
+  tag: false
+  commitMessage: 'release prisma-import cli v${version}'
+github:
+  release: false
+npm:
+  publish: true
+  versionArgs:
+    - '--workspaces-update=false'
+hooks:
+  before:init:
+    - npm run build

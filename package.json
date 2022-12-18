@@ -1,0 +1,35 @@
+{
+  "name": "prisma-import-tools",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "5.45.0",
+    "@typescript-eslint/parser": "5.45.0",
+    "eslint": "8.28.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-unused-imports": "2.0.0",
+    "husky": "8.0.2",
+    "lint-staged": "13.0.4",
+    "pinst": ">=2",
+    "prettier": "2.8.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{html,css,less,ejs}": [
+      "prettier --write"
+    ],
+    "*.js": "eslint --cache --fix",
+    "*.{js,css,md}": "prettier --write"
+  },
+  "scripts": {
+    "postinstall": "husky install",
+    "prepublishOnly": "pinst --disable",
+    "postpublish": "pinst --enable",
+    "ls": "yarn workspace @ajmnz/prisma-language-server",
+    "vs": "yarn workspace prisma",
+    "cli": "yarn workspace prisma-import"
+  }
+}

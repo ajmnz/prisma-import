@@ -1,0 +1,502 @@
+{
+  "primitiveTypes": [
+    {
+      "label": "String",
+      "documentation": "Variable length text"
+    },
+    {
+      "label": "Boolean",
+      "documentation": "True or false value"
+    },
+    {
+      "label": "Int",
+      "documentation": "Integer value"
+    },
+    {
+      "label": "Float",
+      "documentation": "Floating point number"
+    },
+    {
+      "label": "DateTime",
+      "documentation": "Timestamp"
+    },
+    {
+      "label": "Json",
+      "documentation": "A JSON object"
+    },
+    {
+      "label": "Bytes",
+      "documentation": ""
+    },
+    {
+      "label": "Decimal",
+      "documentation": "Decimal value"
+    },
+    {
+      "label": "BigInt",
+      "documentation": "Integer values that may be greater than 2^53"
+    },
+    {
+      "label": "Unsupported",
+      "insertText": "Unsupported(\"$0\")",
+      "documentation": "An arbitrary database column type, for which Prisma has no syntax. Fields of type `Unsupported` work with Prisma Migrate and introspection, but are not exposed in Prisma Client.",
+      "fullSignature": "Unsupported(_ name: String)",
+      "params": [
+        {
+          "label": "name",
+          "documentation": "Name of the column type as expected by the underlying database, e.g. Unsupported(\"GEOGRAPHY(POINT,4326)\"). This string is not validated by Prisma Migrate and will be used by Prisma Migrate to generate the DDL statements to evolve the database schema. Prisma Introspect will overwrite this when re-introspecting if the type does not match."
+        }
+      ]
+    }
+  ],
+  "blockTypes": [
+    {
+      "label": "datasource",
+      "documentation": "The datasource block tells the schema where the models are backed."
+    },
+    {
+      "label": "generator",
+      "documentation": "Generator blocks configure which clients are generated and how they're generated. Language preferences and binary configuration will go in here."
+    },
+    {
+      "label": "model",
+      "documentation": "Models represent the entities of your application domain. They are defined using model blocks in the data model."
+    },
+    {
+      "label": "import",
+      "documentation": "Imports let you import models from other schemas.",
+      "insertText": "import { $0 } from \"./$1\""
+    },
+    {
+      "label": "enum",
+      "documentation": "Enums are defined via the enum block. You can define enums in your data model if they're supported by the datasource you use (e.g SQLite: not supported)."
+    }
+  ],
+  "dataSourceFields": [
+    {
+      "label": "provider",
+      "documentation": "Describes which datasource connector to use. Can be one of the following datasource providers: `postgresql`, `mysql`, `sqlserver`, `sqlite`, `mongodb` or `cockroachdb`."
+    },
+    {
+      "label": "url",
+      "documentation": "Connection URL including authentication info. Each datasource provider documents the URL syntax. Most providers use the syntax provided by the database [learn more](https://pris.ly/d/connection-strings)."
+    },
+    {
+      "label": "shadowDatabaseUrl",
+      "documentation": "Connection URL including authentication info to use for Migrate's [shadow database](https://pris.ly/d/migrate-shadow). Each datasource provider documents the URL syntax. Most providers use the syntax provided by the database."
+    },
+    {
+      "label": "relationMode",
+      "insertText": "relationMode = $0",
+      "documentation": "Set the global relation mode for all relations. Values can be either `\"foreignKeys\"` (Default), or `\"prisma\"`. [learn more](https://pris.ly/d/relationMode)",
+      "fullSignature": "relationMode = \"foreignKeys\" | \"prisma\")"
+    },
+    {
+      "label": "extensions",
+      "insertText": "extensions = [$0]",
+      "documentation": "Enable PostgreSQL extensions. [Learn More](https://pris.ly/d/postgresql-extensions)"
+    }
+  ],
+  "generatorFields": [
+    {
+      "label": "provider",
+      "documentation": "Describes which generator to use. This can point to a file that implements a generator or specify a built-in generator directly."
+    },
+    {
+      "label": "output",
+      "documentation": "Determines the location for the generated client [learn more](https://pris.ly/d/prisma-schema)"
+    },
+    {
+      "label": "binaryTargets",
+      "documentation": "Specifies the OS on which the Prisma Client will run to ensure binary compatibility of the query engine."
+    },
+    {
+      "label": "previewFeatures",
+      "documentation": "Enables preview feature flags."
+    },
+    {
+      "label": "engineType",
+      "documentation": "Defines the query engine type for Prisma Client."
+    }
+  ],
+  "blockAttributes": [
+    {
+      "label": "@@map",
+      "insertText": "@@map(\"$0\")",
+      "documentation": "Maps a model name from the Prisma schema to a different table name.",
+      "fullSignature": "@@map(_ name: String)",
+      "params": [
+        {
+          "label": "name",
+          "insertText": "name: \"$0\"",
+          "documentation": "The name of the target database table."
+        }
+      ]
+    },
+    {
+      "label": "@@id",
+      "insertText": "@@id([$0])",
+      "documentation": "Defines a multi-field ID on the model.",
+      "fullSignature": "@@id(_ fields: FieldReference[], name: String?, map: String?)",
+      "params": [
+        {
+          "label": "fields",
+          "insertText": "fields: [$0]",
+          "documentation": "A list of references."
+        },
+        {
+          "label": "name",
+          "insertText": "name: \"$0\"",
+          "documentation": "Defines the name in your Prisma Client API."
+        },
+        {
+          "label": "map",
+          "insertText": "map: \"$0\"",
+          "documentation": "Defines a custom name for the primary key in the database."
+        }
+      ]
+    },
+    {
+      "label": "@@unique",
+      "insertText": "@@unique([$0])",
+      "documentation": "Defines a compound unique constraint for the specified fields.",
+      "fullSignature": "@@unique(_ fields: FieldReference[], name: String?, map: String?)",
+      "params": [
+        {
+          "label": "fields",
+          "insertText": "fields: [$0]",
+          "documentation": "A list of references."
+        },
+        {
+          "label": "name",
+          "insertText": "name: \"$0\"",
+          "documentation": "Defines the name in your Prisma Client API."
+        },
+        {
+          "label": "map",
+          "insertText": "map: \"$0\"",
+          "documentation": "Defines a custom constraint name in the database."
+        }
+      ]
+    },
+    {
+      "label": "@@index",
+      "insertText": "@@index([$0])",
+      "documentation": "Defines an index on the model.",
+      "fullSignature": "@@index(_ fields: FieldReference[], map: String?)",
+      "params": [
+        {
+          "label": "fields",
+          "insertText": "fields: [$0]",
+          "documentation": "A list of references."
+        },
+        {
+          "label": "map",
+          "insertText": "map: \"$0\"",
+          "documentation": "Defines a custom index name in the database."
+        }
+      ]
+    },
+    {
+      "label": "@@fulltext",
+      "insertText": "@@fulltext([$0])",
+      "documentation": "Defines a full-text index on the model.",
+      "fullSignature": "@@fulltext(_ fields: FieldReference[], map: String?)",
+      "params": [
+        {
+          "label": "fields",
+          "insertText": "fields: [$0]",
+          "documentation": "A list of references."
+        },
+        {
+          "label": "map",
+          "insertText": "map: \"$0\"",
+          "documentation": "Defines a custom index name in the database."
+        }
+      ]
+    },
+    {
+      "label": "@@ignore",
+      "documentation": "A model with an `@@ignore` attribute can be kept in sync with the database schema using Prisma Migrate and Introspection, but won't be exposed in Prisma Client.",
+      "fullSignature": "@@ignore",
+      "params": []
+    }
+  ],
+  "fieldAttributes": [
+    {
+      "label": "@id",
+      "fullSignature": "@id",
+      "documentation": "Defines a single-field ID on the model.",
+      "params": [
+        {
+          "label": "map",
+          "insertText": "map: \"$0\"",
+          "documentation": "Defines a custom primary key name in the database."
+        },
+        {
+          "label": "length",
+          "insertText": "length: $0",
+          "documentation": "Defines a maximum length for the subpart of the value to be indexed in cases where the full value would exceed MySQL's limits for index sizes. See https://dev.mysql.com/doc/refman/8.0/en/innodb-limits.html"
+        },
+        {
+          "label": "sort",
+          "insertText": "sort: $0",
+          "documentation": "Specify in which order the entries of the index are stored in the database. This can have an effect on whether the database is able to use an index for specific queries."
+        }
+      ]
+    },
+    {
+      "label": "@unique",
+      "fullSignature": "@unique",
+      "documentation": "Defines a unique constraint for this field.",
+      "params": [
+        {
+          "label": "map",
+          "insertText": "map: \"$0\"",
+          "documentation": "Defines a custom name for the unique constraint in the database."
+        },
+        {
+          "label": "length",
+          "insertText": "length: $0",
+          "documentation": "Defines a maximum length for the subpart of the value to be indexed in cases where the full value would exceed MySQL's limits for index sizes. See https://dev.mysql.com/doc/refman/8.0/en/innodb-limits.html"
+        },
+        {
+          "label": "sort",
+          "insertText": "sort: $0",
+          "documentation": "Specify in which order the entries of the index are stored in the database. This can have an effect on whether the database is able to use an index for specific queries."
+        }
+      ]
+    },
+    {
+      "label": "@map",
+      "insertText": "@map(\"$0\")",
+      "documentation": "Maps a field name from the Prisma schema to a different column name.",
+      "fullSignature": "@map(_ name: String)",
+      "params": [
+        {
+          "label": "name",
+          "documentation": "The name of the target database column."
+        }
+      ]
+    },
+    {
+      "label": "@default",
+      "insertText": "@default($0)",
+      "documentation": "Defines a default value for this field. `@default` takes an expression as an argument.",
+      "fullSignature": "@default(_ expression: Expression)",
+      "params": [
+        {
+          "label": "expression",
+          "documentation": "An expression (e.g. `5`, `true`, `now()`)."
+        }
+      ]
+    },
+    {
+      "label": "@relation",
+      "insertText": "@relation($0)",
+      "documentation": "Defines a connection between two models. [Learn more](https://pris.ly/d/relation-attribute).",
+      "fullSignature": "@relation(_ name: String?, map: String?, fields: FieldReference[]?, references: FieldReference[]?)",
+      "params": [
+        {
+          "label": "name",
+          "documentation": "Defines the name of the relationship. In an m-n-relation, it also determines the name of the underlying relation table."
+        },
+        {
+          "label": "map",
+          "documentation": "Defines a custom name for the foreign key in the database."
+        },
+        {
+          "label": "fields",
+          "documentation": "A list of field references of the *current* model."
+        },
+        {
+          "label": "references",
+          "documentation": "A list of field references of the model on *the other side of the relation*."
+        },
+        {
+          "label": "onDelete",
+          "documentation": "Specifies the action to perform when a referenced entry in the referenced model is being deleted."
+        },
+        {
+          "label": "onUpdate",
+          "documentation": "Specifies the action to perform when a referenced field in the referenced model is being updated to a new value."
+        }
+      ]
+    },
+    {
+      "label": "@updatedAt",
+      "fullSignature": "@updatedAt",
+      "documentation": "Automatically stores the time when a record was last updated.",
+      "params": []
+    },
+    {
+      "label": "@ignore",
+      "fullSignature": "@ignore",
+      "documentation": "A field with an `@ignore` attribute can be kept in sync with the database schema using Prisma Migrate and Introspection, but won't be exposed in Prisma Client.",
+      "params": []
+    }
+  ],
+  "relationArguments": [
+    {
+      "label": "references",
+      "insertText": "references: [$0]",
+      "fullSignature": "references: []",
+      "documentation": "A list of field references of the model on *the other side of the relation*.",
+      "params": []
+    },
+    {
+      "label": "fields",
+      "insertText": "fields: [$0]",
+      "fullSignature": "fields: []",
+      "documentation": "A list of field references of the *current* model.",
+      "params": []
+    },
+    {
+      "label": "onDelete",
+      "insertText": "onDelete: $0",
+      "fullSignature": "onDelete: Cascade | Restrict | NoAction | SetNull | SetDefault",
+      "documentation": "Specifies the action to perform when a referenced entry in the referenced model is being deleted [learn more](https://pris.ly/d/referential-actions).",
+      "params": []
+    },
+    {
+      "label": "onUpdate",
+      "insertText": "onUpdate: $0",
+      "fullSignature": "onUpdate: Cascade | Restrict | NoAction | SetNull | SetDefault",
+      "documentation": "Specifies the action to perform when a referenced field in the referenced model is being updated to a new value [learn more](https://pris.ly/d/referential-actions).",
+      "params": []
+    },
+    {
+      "label": "\"\"",
+      "insertText": "\"$0\"",
+      "fullSignature": "String",
+      "documentation": "Defines the name of the relationship. In an m-n-relation, it also determines the name of the underlying relation table.",
+      "params": []
+    },
+    {
+      "label": "name",
+      "insertText": "name: \"$0\"",
+      "fullSignature": "name: String",
+      "documentation": "Defines the name of the relationship. In an m-n-relation, it also determines the name of the underlying relation table.",
+      "params": []
+    },
+    {
+      "label": "map",
+      "insertText": "map: \"$0\"",
+      "fullSignature": "map: String",
+      "documentation": "Defines a custom name for the foreign key in the database.",
+      "params": []
+    }
+  ],
+  "datasourceUrlArguments": [
+    {
+      "label": "\"\"",
+      "insertText": "\"$0\"",
+      "fullSignature": "\"\"",
+      "documentation": "Connection URL including authentication info. Each datasource provider documents the URL syntax. Most providers use the syntax provided by the database [learn more](https://pris.ly/d/prisma-schema).",
+      "params": []
+    },
+    {
+      "label": "env()",
+      "insertText": "env(\"$0\")",
+      "fullSignature": "env(_ environmentVariable: string)",
+      "documentation": "Specifies a datasource via an environment variable. When running a Prisma CLI command that needs the database connection URL (e.g. `prisma generate`), you need to make sure that the `DATABASE_URL` environment variable is set. One way to do so is by creating a `.env` file. Note that the file must be in the same directory as your schema.prisma file to automatically be picked up by the Prisma CLI.",
+      "params": [
+        {
+          "label": "environmentVariable",
+          "documentation": "The environment variable in which the database connection URL is stored."
+        }
+      ]
+    }
+  ],
+  "generatorProviders": [
+    {
+      "label": "prisma-client-js",
+      "documentation": "Built-in generator."
+    }
+  ],
+  "generatorProviderArguments": [
+    {
+      "label": "\"\"",
+      "insertText": "\"$0\"",
+      "documentation": "Specifies a single provider."
+    }
+  ],
+  "engineTypes": [
+    {
+      "label": "library",
+      "documentation": "Node-API library. (Default)"
+    },
+    {
+      "label": "binary",
+      "documentation": "Executable binary."
+    },
+    {
+      "label": "dataproxy",
+      "documentation": "Prisma Data Proxy."
+    }
+  ],
+  "engineTypeArguments": [
+    {
+      "label": "\"\"",
+      "insertText": "\"$0\"",
+      "documentation": "Specifies the engine type."
+    }
+  ],
+  "datasourceProviders": [
+    {
+      "label": "mysql",
+      "documentation": "Specifies a MySQL datasource. Learn more about this connector [here](https://pris.ly/d/mysql-connector)."
+    },
+    {
+      "label": "postgresql",
+      "documentation": "Specifies a PostgreSQL datasource. Learn more about this connector [here](https://pris.ly/d/postgresql-connector)."
+    },
+    {
+      "label": "sqlite",
+      "documentation": "Specifies a SQLite datasource. Learn more about this connector [here](https://pris.ly/d/sqlite-connector)."
+    },
+    {
+      "label": "sqlserver",
+      "documentation": "Specifies a Microsoft SQL Server datasource. Learn more about this connector [here](https://pris.ly/d/sqlserver-connector)."
+    },
+    {
+      "label": "mongodb",
+      "documentation": "Specifies a MongoDB datasource. Learn more about this connector [here](https://pris.ly/d/mongodb-connector)."
+    },
+    {
+      "label": "cockroachdb",
+      "documentation": "Specifies a CockroachDB datasource. Learn more about this connector [here](https://pris.ly/d/cockroachdb-connector)."
+    }
+  ],
+  "datasourceProviderArguments": [
+    {
+      "label": "\"\"",
+      "insertText": "\"$0\"",
+      "documentation": "Specifies a single provider."
+    }
+  ],
+  "previewFeaturesArguments": [
+    {
+      "label": "[]",
+      "insertText": "[$0]",
+      "documentation": "Enables preview feature flags."
+    },
+    {
+      "label": "\"\"",
+      "insertText": "\"$0\"",
+      "documentation": "Enables a preview feature flag."
+    }
+  ],
+  "relationModeValues": [
+    {
+      "label": "foreignKeys",
+      "insertText": "foreignKeys",
+      "documentation": "Default value. The relation will use the Foreign Keys from the database."
+    },
+    {
+      "label": "prisma",
+      "insertText": "prisma",
+      "documentation": "The relation will not use Foreign Keys from the databse. Prisma Client will emulate their behavior for update and delete queries. [learn more](https://pris.ly/d/relationMode)"
+    }
+  ]
+}

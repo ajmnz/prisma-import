@@ -1,0 +1,13 @@
+git:
+  tag: false
+  commitMessage: 'release language-server v${version}'
+github:
+  release: false
+npm:
+  publish: true
+  versionArgs:
+    - '--workspaces-update=false'
+hooks:
+  before:init:
+    - npm run build
+    - npm run test

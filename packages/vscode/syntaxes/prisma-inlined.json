@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Prisma schema language: inline highlighting",
+  "scopeName": "inline.prisma",
+  "fileTypes": ["js", "jsx", "ts", "tsx", "vue"],
+  "injectionSelector": "L:source -string -comment",
+  "patterns": [
+    {
+      "contentName": "meta.embedded.block.prisma",
+      "begin": "\\s*+(?:(?:(Relay)\\??\\.)|(prisma)|(/\\* prisma \\*/)|(/\\* Prisma \\*/))\\s*(`)",
+      "beginCaptures": {
+        "1": {
+          "name": "variable.other.class.js"
+        },
+        "2": {
+          "name": "entity.name.function.tagged-template.js"
+        },
+        "3": {
+          "name": "entity.name.function.tagged-template.js"
+        },
+        "4": {
+          "name": "punctuation.definition.string.template.begin.js"
+        }
+      },
+      "end": "`",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.template.end.js"
+        }
+      },
+      "patterns": [{ "include": "source.prisma" }]
+    },
+    {
+      "name": "taggedTemplates",
+      "contentName": "meta.embedded.block.prisma",
+      "begin": "(`)(#prisma)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.string.template.begin.js"
+        }
+      },
+      "end": "`",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.string.template.end.js"
+        }
+      },
+      "patterns": [{ "include": "source.prisma" }]
+    }
+  ]
+}

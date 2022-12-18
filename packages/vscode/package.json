@@ -1,0 +1,164 @@
+{
+  "name": "prisma-import",
+  "displayName": "Prisma Import",
+  "description": "Adds import statements to your Prisma schemas",
+  "version": "1.0.2",
+  "license": "Apache-2.0",
+  "icon": "logo_white.png",
+  "engines": {
+    "vscode": "^1.56.0"
+  },
+  "publisher": "ajmnz",
+  "categories": [
+    "Programming Languages"
+  ],
+  "dependencies": {
+    "@ajmnz/prisma-language-server": "1.0.5",
+    "checkpoint-client": "1.1.21",
+    "minimatch": "5.1.1",
+    "vscode-languageclient": "7.0.0",
+    "watcher": "^1.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ajmnz/prisma-import.git",
+    "directory": "packages/vscode"
+  },
+  "scripts": {
+    "clean": "rimraf -rf ./*.vsix",
+    "build": "npm run clean && tsc -p ./",
+    "watch": "npm run build -- -w",
+    "test": "rm -rf ./dist && npm run build && node dist/src/__test__/runTest true",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package",
+    "release": "release-it"
+  },
+  "main": "./dist/src/extension.js",
+  "activationEvents": [
+    "onLanguage:prisma"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "prisma",
+        "aliases": [
+          "Prisma",
+          "prisma"
+        ],
+        "icon": {
+          "light": "./prisma_icon.svg",
+          "dark": "./prisma_icon.svg"
+        },
+        "extensions": [
+          ".prisma"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "prisma",
+        "scopeName": "source.prisma",
+        "path": "./syntaxes/prisma.tmLanguage.json"
+      },
+      {
+        "injectTo": [
+          "source.js",
+          "source.ts",
+          "source.js.jsx",
+          "source.jsx",
+          "source.tsx",
+          "source.vue"
+        ],
+        "scopeName": "inline.prisma",
+        "path": "./syntaxes/prisma-inlined.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.prisma": "prisma"
+        }
+      },
+      {
+        "injectTo": [
+          "source.js",
+          "source.ts",
+          "source.js.jsx",
+          "source.jsx",
+          "source.tsx",
+          "source.vue"
+        ],
+        "scopeName": "source.ts.prismaClientRawSQL",
+        "path": "./syntaxes/prismaClientRawSQL.json",
+        "embeddedLanguages": {
+          "meta.embedded.block.sql": "sql"
+        }
+      },
+      {
+        "scopeName": "markdown.prisma.codeblock",
+        "path": "./syntaxes/prisma.markdown.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.prisma": "prisma"
+        }
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Prisma Import",
+      "properties": {
+        "prisma.fileWatcher": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the File Watcher functionality for Prisma Client."
+        },
+        "prisma.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Setting for logging between the VS Code extension and the language server."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "prisma.restartLanguageServer",
+        "title": "Restart Language Server",
+        "category": "Prisma Import"
+      },
+      {
+        "command": "prisma.filewatcherEnable",
+        "title": "Enable the File Watcher functionality for Prisma Client.",
+        "category": "Prisma Import"
+      },
+      {
+        "command": "prisma.filewatcherDisable",
+        "title": "Disable the File Watcher functionality for Prisma Client.",
+        "category": "Prisma Import"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/glob": "8.0.0",
+    "@types/mocha": "10.0.1",
+    "@types/vscode": "1.56.0",
+    "@vscode/test-electron": "2.2.0",
+    "@vscode/vsce": "2.15.0",
+    "is-ci": "3.0.1",
+    "mocha": "10.1.0",
+    "ovsx": "0.5.2",
+    "release-it": "15.5.1",
+    "rimraf": "3.0.2",
+    "typescript": "4.9.3"
+  },
+  "gitHead": "7d51b157647fe1705813a30d1a77b8ccf136b8d4",
+  "publishConfig": {
+    "access": "public"
+  },
+  "preview": true
+}

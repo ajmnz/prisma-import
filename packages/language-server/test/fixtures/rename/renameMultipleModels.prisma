@@ -1,0 +1,18 @@
+model User {
+  id               Int       @id @default(autoincrement())
+  favoriteArticles Article[] @relation("FavoritedArticles")
+  writtenArticles  Article[]
+}
+
+model Article {
+  id              Int          @id @default(autoincrement())
+  slug            String       @unique
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  title           String
+  description     String
+  markdownContent String
+  user            User         @relation(fields: [userId], references: [id])
+  favoritedBy     User[]       @relation("FavoritedArticles")
+  userId          Int
+}

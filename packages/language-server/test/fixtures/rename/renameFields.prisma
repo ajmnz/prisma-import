@@ -1,0 +1,36 @@
+model Post {
+    title     String
+    published Boolean @default(false)
+    author    User    @relation(fields: [authorId], references: [id])
+    authorId  Int
+    @@id([authorId, title])
+}
+
+model User {
+    id    Int     @default(autoincrement()) @id
+    email String  
+    name  String?
+    posts Post[]
+}
+
+model World {
+  id       Int     @id @default(autoincrement())
+  title    String
+  content  String?
+  @@index([title])
+}
+
+model Note {
+  id        Int     @default(autoincrement())
+  human    Human    @relation(fields: [humanId], references: [id])
+  humanId  Int
+  title     String
+  
+  @@unique([humanId, title])
+}
+
+model Human {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  note Note[]
+}
