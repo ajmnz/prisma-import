@@ -245,3 +245,20 @@ To document
 
 - How does the extension resolve errors in the virtual schema
 - How does the extension format across schemas
+
+## License
+
+VSCode Extension
+
+- Apache 2.0
+- [LICENSE](packages/vscode/LICENSE)
+
+Language Server
+
+- Apache 2.0
+- [LICENSE](packages/language-server/LICENSE)
+
+CLI
+
+- MIT
+- [LICENSE](packages/prisma-import/LICENSE)
