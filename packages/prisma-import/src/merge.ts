@@ -1,5 +1,5 @@
 import path from 'path'
-import { readFile, writeFile } from './util'
+import { ensureDirectoryExistence, readFile, writeFile } from './util'
 import { format } from '@prisma/prisma-fmt-wasm'
 import { pathToFileURL } from 'url'
 
@@ -54,6 +54,7 @@ export const merge = async (schemaPaths: string[], outputPath: string, dry: bool
   if (dry) {
     console.log(resultingSchema)
   } else {
+    await ensureDirectoryExistence(outputPath)
     await writeFile(outputPath, resultingSchema)
   }
 }
