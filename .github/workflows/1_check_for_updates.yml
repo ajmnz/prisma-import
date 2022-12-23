@@ -1,0 +1,39 @@
+name: 1. Check for Prisma CLI Update
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+env:
+  ENVIRONMENT: PRODUCTION
+
+jobs:
+  check:
+    name: Check for Prisma CLI update
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check for Prisma CLI update
+        id: check_update
+        run: node scripts/check_for_update.js
+
+      - name: Invoke bump workflow with inputs for latest
+        if: ${{ steps.check_update.outputs.latest_version }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: 2. Bump versions
+          token: ${{ secrets.GH_TOKEN }}
+          inputs: '{ "npm_channel": "latest", "version": "${{ steps.check_update.outputs.latest_version }}" }'

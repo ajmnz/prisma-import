@@ -1,0 +1,49 @@
+name: 6. Build extension and publish to Marketplace
+run-name: 6. Build extension + publish - ${{ inputs.trigger_reason }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      npm_channel:
+        description: 'Prisma CLI NPM Channel'
+        required: true
+      extension_version:
+        description: 'VSCode extension version'
+        required: true
+      trigger_reason:
+        description: 'Information about what caused the publishing process in the first place.'
+        required: true
+
+env:
+  ENVIRONMENT: PRODUCTION
+
+jobs:
+  build:
+    name: Build extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Print inputs
+        run: |
+          echo ${{github.event.inputs.npm_channel}}
+          echo ${{github.event.inputs.extension_version}}
+          echo ${{github.event.inputs.trigger_reason}}
+
+      - name: Install Dependencies
+        run: npm install && npm run install:vscode
+
+      - name: Build Extension
+        run: npm run build:vs
+
+      - name: Build and publish vsix to Marketplace
+        # run: cd packages/vscode && npx vsce publish --pat ${{ secrets.AZURE_DEVOPS_TOKEN }}
+        run: echo "Would have released 'prisma-import-${{ github.event.inputs.extension_version }}.vsix' to Marketplace"

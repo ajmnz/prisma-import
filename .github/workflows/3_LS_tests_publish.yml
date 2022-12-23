@@ -1,0 +1,79 @@
+name: 3. Test Language Server and publish
+run-name: 3. Test Language Server and publish - ${{ inputs.trigger_reason }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      npm_channel:
+        description: 'Prisma CLI NPM Channel'
+        required: true
+      extension_version:
+        description: 'VSCode extension version'
+        required: true
+      trigger_reason:
+        description: 'Information about what caused the publishing process in the first place.'
+        required: true
+
+jobs:
+  tests:
+    name: Run tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm install && npm run install:vscode
+
+      - name: Run Language Server tests
+        run: |
+          npm run build:ls && npm run test:ls
+
+  bump:
+    name: Bump Language Server version
+    needs: [tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Print inputs
+        run: |
+          echo ${{github.event.inputs.npm_channel}}
+          echo ${{github.event.inputs.extension_version}}
+          echo ${{github.event.inputs.trigger_reason}}
+
+      - name: Install Dependencies
+        run: npm install && npm run install:vscode
+
+      - name: Build Language Server
+        run: npm run build:ls
+
+      - name: Publish Language Server to npm
+        run: echo "Would have published ${{ github.event.inputs.npm_channel }} to NPM"
+        # run: cd packages/language-server && npm publish --tag ${{ github.event.inputs.npm_channel }} --access public
+        # env:
+        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Trigger next workflow for bumping Language Server in extension
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: 4. Bump LS in VSCode extension
+          inputs: '{ "npm_channel": "${{ github.event.inputs.npm_channel }}", "extension_version": "${{ github.event.inputs.extension_version }}", "trigger_reason": "${{github.event.inputs.trigger_reason}}" }'

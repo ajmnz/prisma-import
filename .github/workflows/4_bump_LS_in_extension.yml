@@ -1,0 +1,70 @@
+name: 4. Bump LS in VSCode extension
+run-name: 4. Bump LS in VSCode extension - ${{ inputs.trigger_reason }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      npm_channel:
+        description: 'Prisma CLI NPM Channel'
+        required: true
+      extension_version:
+        description: 'VSCode extension version'
+        required: true
+      trigger_reason:
+        description: 'Information about what caused the publishing process in the first place.'
+        required: true
+
+env:
+  ENVIRONMENT: PRODUCTION
+
+jobs:
+  bump:
+    name: Bump LS in VSCode extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Print inputs
+        run: |
+          echo ${{github.event.inputs.npm_channel}}
+          echo ${{github.event.inputs.extension_version}}
+          echo ${{github.event.inputs.trigger_reason}}
+
+      - name: Install Dependencies
+        run: npm install && npm run install:vscode
+
+      - name: Bump LS version in extension
+        run: |
+          node scripts/update_package_json_files.js ${{ github.event.inputs.extension_version }}
+
+      - name: Install dependencies and update lock
+        run: npm install && npm run install:vscode
+
+      - name: Setup Git
+        run: |
+          sh scripts/set_git_credentials.sh
+
+      - name: Read package.json versions (enginesVersion) for the commit message
+        id: packagejson
+        run: |
+          PACKAGE_JSON_PATH="./packages/language-server/package.json"
+          echo $PACKAGE_JSON_PATH
+          ENGINES_VERSION=$(jq -r '.prisma.enginesVersion' ${PACKAGE_JSON_PATH}) 
+          echo "::set-output name=engines::$ENGINES_VERSION"
+
+      - name: Commit and push
+        run: |
+          sh scripts/commit_and_push.sh "Bump LS to ${{ github.event.inputs.extension_version }} in VSCode. Engines: ${{ steps.packagejson.outputs.engines }}"
+
+      - name: Trigger next workflow for VSCode e2e tests
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: 5. Integration tests in VSCode folder with published LS
+          inputs: '{ "npm_channel": "${{ github.event.inputs.npm_channel }}", "extension_version": "${{ github.event.inputs.extension_version }}", "trigger_reason": "${{github.event.inputs.trigger_reason}}" }'

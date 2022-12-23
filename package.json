@@ -11,7 +11,10 @@
     "husky": "8.0.2",
     "lint-staged": "13.0.4",
     "pinst": ">=2",
-    "prettier": "2.8.0"
+    "prettier": "2.8.0",
+    "execa": "6.1.0",
+    "p-retry": "5.1.2",
+    "semver": "7.3.8"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -25,11 +28,15 @@
     "*.{js,css,md}": "prettier --write"
   },
   "scripts": {
+    "install:all": "npm run install:vscode && cd packages/prisma-import && npm install && cd ../../",
+    "install:vscode": "cd packages/vscode && npm install && cd ../language-server && npm install && cd ../../",
     "postinstall": "husky install",
     "prepublishOnly": "pinst --disable",
     "postpublish": "pinst --enable",
-    "ls": "yarn workspace @ajmnz/prisma-language-server",
-    "vs": "yarn workspace prisma",
-    "cli": "yarn workspace prisma-import"
+    "build:ls": "cd packages/language-server && npm run build && cd ../../",
+    "build:vs": "cd packages/vscode && npm run build && cd ../../",
+    "build:cli": "cd packages/prisma-import && npm run build && cd ../../",
+    "test:ls": "cd packages/language-server && npm run test && cd ../../",
+    "test:vs": "sh scripts/e2e.sh"
   }
 }

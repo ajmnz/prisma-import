@@ -1,0 +1,65 @@
+name: 2. Bump versions
+run-name: 2. Bump versions - CLI ${{ inputs.version }} from ${{ inputs.npm_channel }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      npm_channel:
+        description: 'Prisma CLI NPM Channel'
+        required: true
+      version:
+        description: 'New Prisma CLI version in that channel'
+        required: true
+
+env:
+  ENVIRONMENT: production
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install && npm run install:vscode
+
+      - name: Setup Git
+        run: |
+          sh scripts/set_git_credentials.sh
+
+      - name: Update versions in scripts folder
+        run: |
+          echo "${{ github.event.inputs.version }}" >scripts/versions/prisma_${{ github.event.inputs.npm_channel }}
+
+      - name: Update next extension version in scripts folder and output for later use
+        id: update # Used to access the calculated next extension version in later steps
+        run: node scripts/bump_extension_version.js ${{ github.event.inputs.npm_channel }}
+
+      - name: Commit and Push
+        run: |
+          sh scripts/commit_and_push.sh "bump Prisma CLI ${{ github.event.inputs.npm_channel }} version to ${{ github.event.inputs.version }} and extension version to ${{ steps.update.outputs.next_extension_version }} in scripts."
+
+      - name: Update Prisma CLI version and VSCode extension version
+        run: |
+          node scripts/update_package_json_files.js ${{ github.event.inputs.npm_channel }} ${{ steps.update.outputs.next_extension_version }} ${{ github.event.inputs.version }}
+
+      - name: Install Dependencies to update lock file
+        run: npm install && npm run install:vscode
+
+      - name: Push to branch
+        run: |
+          sh scripts/commit_and_push.sh "bump extension version to ${{ steps.update.outputs.next_extension_version }} in package.json" main
+
+      - name: Trigger next workflow for Language Server tests
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: 3. Test Language Server and publish
+          inputs: '{ "npm_channel": "${{ github.event.inputs.npm_channel }}", "extension_version": "${{ steps.update.outputs.next_extension_version }}", "trigger_reason": "Prisma CLI version ${{github.event.inputs.version}}" }'

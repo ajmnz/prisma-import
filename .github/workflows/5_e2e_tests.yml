@@ -1,0 +1,74 @@
+name: 5. Integration tests in VSCode folder with published LS
+run-name: 5. Integration tests in VSCode folder with published LS - ${{ inputs.trigger_reason }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      npm_channel:
+        description: 'Prisma CLI NPM Channel'
+        required: true
+      extension_version:
+        description: 'VSCode extension version'
+        required: true
+      trigger_reason:
+        description: 'Information about what caused the publishing process in the first place.'
+        required: true
+
+env:
+  ENVIRONMENT: PRODUCTION
+
+jobs:
+  tests:
+    name: Integration tests in VSCode folder with published LS
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install Dependencies
+        run: npm install && npm run install:vscode
+
+      - name: Build Extension
+        run: npm run build:vs
+
+      - name: Run headless E2E tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: npm run test:vs
+
+  trigger:
+    name: Trigger next workflow
+    needs: [tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Print inputs
+        run: |
+          echo ${{github.event.inputs.npm_channel}}
+          echo ${{github.event.inputs.extension_version}}
+          echo ${{github.event.inputs.trigger_reason}}
+
+      - name: Trigger next workflow to build extension
+        if: ${{ needs.tests.result == 'success' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: 6. Build extension
+          inputs: '{ "npm_channel": "${{ github.event.inputs.npm_channel }}", "extension_version": "${{ github.event.inputs.extension_version }}", "trigger_reason": "${{github.event.inputs.trigger_reason}}" }'
