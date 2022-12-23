@@ -134,9 +134,9 @@ if (require.main === module) {
   const version = nextVersion({
     currentVersion: currentVersionOfExtension,
     branch_channel: npm_channel,
-    prisma_dev: readVersionFile({ fileName: 'prisma_dev' }),
+    prisma_dev: '',
     prisma_latest: readVersionFile({ fileName: 'prisma_latest' }),
-    prisma_patch: readVersionFile({ fileName: 'prisma_patch-dev' }),
+    prisma_patch: '',
   })
   console.log(`Next extension version ${version}.`)
   console.log(`::set-output name=next_extension_version::${version}`)
