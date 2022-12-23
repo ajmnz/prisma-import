@@ -78,6 +78,7 @@ suite('Completions', () => {
           { label: 'datasource', kind: vscode.CompletionItemKind.Class },
           { label: 'enum', kind: vscode.CompletionItemKind.Class },
           { label: 'generator', kind: vscode.CompletionItemKind.Class },
+          { label: 'import', kind: vscode.CompletionItemKind.Class },
           { label: 'model', kind: vscode.CompletionItemKind.Class },
         ],
         false,
