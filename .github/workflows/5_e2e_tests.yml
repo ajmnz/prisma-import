@@ -70,5 +70,5 @@ jobs:
         if: ${{ needs.tests.result == 'success' }}
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: 6. Build extension
+          workflow: 6. Build extension and publish to Marketplace
           inputs: '{ "npm_channel": "${{ github.event.inputs.npm_channel }}", "extension_version": "${{ github.event.inputs.extension_version }}", "trigger_reason": "${{github.event.inputs.trigger_reason}}" }'
