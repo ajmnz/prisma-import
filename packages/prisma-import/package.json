@@ -1,6 +1,6 @@
 {
   "name": "prisma-import",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "ajmnz <arnau@ajb.cat>",
   "license": "MIT",
   "bin": "dist/index.js",
