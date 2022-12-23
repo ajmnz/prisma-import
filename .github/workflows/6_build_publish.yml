@@ -45,5 +45,4 @@ jobs:
         run: npm run build:vs
 
       - name: Build and publish vsix to Marketplace
-        # run: cd packages/vscode && npx vsce publish --pat ${{ secrets.AZURE_DEVOPS_TOKEN }}
-        run: echo "Would have released 'prisma-import-${{ github.event.inputs.extension_version }}.vsix' to Marketplace"
+        run: cd packages/vscode && npx vsce publish --pat ${{ secrets.AZURE_DEVOPS_TOKEN }}

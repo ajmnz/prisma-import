@@ -67,10 +67,9 @@ jobs:
         run: npm run build:ls
 
       - name: Publish Language Server to npm
-        run: echo "Would have published ${{ github.event.inputs.npm_channel }} to NPM"
-        # run: cd packages/language-server && npm publish --tag ${{ github.event.inputs.npm_channel }} --access public
-        # env:
-        #   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: cd packages/language-server && npm publish --tag ${{ github.event.inputs.npm_channel }} --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Trigger next workflow for bumping Language Server in extension
         uses: benc-uk/workflow-dispatch@v1
