@@ -35,5 +35,4 @@ jobs:
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: 2. Bump versions
-          token: ${{ secrets.GH_TOKEN }}
           inputs: '{ "npm_channel": "latest", "version": "${{ steps.check_update.outputs.latest_version }}" }'
