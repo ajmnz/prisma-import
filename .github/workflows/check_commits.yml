@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 7
     needs: [check_commits]
-    if: ${{ jobs.check_commits.outputs.has_commits }}
+    if: ${{ needs.check_commits.outputs.has_commits }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -73,19 +73,19 @@ jobs:
       - name: Check if PR already exists
         id: check
         run: |
-          sh scripts/check_for_pr.sh sync/${{ jobs.check_commits.outputs.latest_commit }}
+          sh scripts/check_for_pr.sh sync/${{ needs.check_commits.outputs.latest_commit }}
 
       - name: Update latest commit
         if: ${{ steps.check.outputs.can_create_pr }}
         run: |
-          echo "${{ jobs.check_commits.outputs.latest_commit }}" > scripts/versions/commit_sync
+          echo "${{ needs.check_commits.outputs.latest_commit }}" > scripts/versions/commit_sync
 
       - name: Create Pull Request
         if: ${{ steps.check.outputs.can_create_pr }}
         uses: peter-evans/create-pull-request@v4
         with:
           title: '[sync] New commits in prisma/language-tools'
-          body: ${{ jobs.check_commits.outputs.pr_body }}
-          commit-message: Update last commit sync to ${{ jobs.check_commits.outputs.latest_commit }}
-          branch: sync/${{ jobs.check_commits.outputs.latest_commit }}
+          body: ${{ needs.check_commits.outputs.pr_body }}
+          commit-message: Update last commit sync to ${{ needs.check_commits.outputs.latest_commit }}
+          branch: sync/${{ needs.check_commits.outputs.latest_commit }}
           delete-branch: true
