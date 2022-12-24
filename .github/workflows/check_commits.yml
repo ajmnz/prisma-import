@@ -1,0 +1,91 @@
+name: Check for commits by Prisma team
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  check_commits:
+    name: Check for commits by Prisma team
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    outputs:
+      has_commits: ${{ steps.check.outputs.has_commits }}
+      latest_commit: ${{ steps.latest.outputs.latest_commit }}
+      pr_body: ${{ steps.pr_body.outputs.content }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Clone prisma/language-tools
+        run: |
+          git clone --branch=stable https://github.com/prisma/language-tools.git /tmp/language-tools
+          cd /tmp/language-tools
+          cp $GITHUB_WORKSPACE/scripts/check_for_commits.js ./scripts
+          cp $GITHUB_WORKSPACE/scripts/versions/commit_sync ./scripts/versions
+
+      - name: Check for commits
+        id: check
+        run: |
+          node scripts/check_for_commits.js check
+
+      - name: Set latest commit
+        if: ${{ steps.check.outputs.has_commits }}
+        id: latest
+        run: |
+          node scripts/check_for_commits.js last
+
+      - name: Set PR body
+        if: ${{ steps.check.outputs.has_commits }}
+        id: pr_body
+        run: |
+          BODY=$(node scripts/check_for_commits.js)
+          BODY="${BODY//'%'/'%25'}"
+          BODY="${BODY//$'\n'/'%0A'}"
+          BODY="${BODY//$'\r'/'%0D'}"
+          echo "::set-output name=content::$BODY"
+
+  create_pr:
+    name: Create a new Pull Request
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    needs: [check_commits]
+    if: ${{ jobs.check_commits.outputs.has_commits }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Setup Git
+        run: |
+          sh scripts/set_git_credentials.sh
+
+      - name: Check if PR already exists
+        id: check
+        run: |
+          sh scripts/check_for_pr.sh sync/${{ jobs.check_commits.outputs.latest_commit }}
+
+      - name: Update latest commit
+        if: ${{ steps.check.outputs.can_create_pr }}
+        run: |
+          echo "${{ jobs.check_commits.outputs.latest_commit }}" > scripts/versions/commit_sync
+
+      - name: Create Pull Request
+        if: ${{ steps.check.outputs.can_create_pr }}
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: '[sync] New commits in prisma/language-tools'
+          body: ${{ jobs.check_commits.outputs.pr_body }}
+          commit-message: Update last commit sync to ${{ jobs.check_commits.outputs.latest_commit }}
+          branch: sync/${{ jobs.check_commits.outputs.latest_commit }}
+          delete-branch: true
