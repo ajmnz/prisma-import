@@ -377,8 +377,8 @@ export function toCompletionItems(allowedTypes: string[], kind: CompletionItemKi
  * Removes all block attribute suggestions that are invalid in this context.
  * E.g. `@@id()` when already used should not be in the suggestions.
  */
-export function removeInvalidAttributeSuggestions(
-  supportedAttributes: CompletionItem[],
+export function filterSuggestionsForBlock(
+  suggestions: CompletionItem[],
   block: Block,
   lines: string[],
 ): CompletionItem[] {
@@ -398,11 +398,50 @@ export function removeInvalidAttributeSuggestions(
     if (!item.startsWith('//')) {
       // TODO we should also remove the other suggestions if used (default()...)
       if (item.includes('@id')) {
-        supportedAttributes = supportedAttributes.filter((attribute) => !attribute.label.includes('id'))
+        suggestions = suggestions.filter((attribute) => !attribute.label.includes('id'))
       }
     }
   }
-  return supportedAttributes
+  return suggestions
+}
+
+/**
+ * Removes all line attribute suggestions that are invalid in this context.
+ * E.g. `@map()` when already used should not be in the suggestions.
+ */
+export function filterSuggestionsForLine(
+  suggestions: CompletionItem[],
+  currentLine: string,
+  fieldType: string,
+  fieldBlockType?: BlockType,
+) {
+  if (fieldBlockType === 'type') {
+    // @default & @relation are invalid on field referencing a composite type
+    // we filter them out
+    suggestions = suggestions.filter((sugg) => sugg.label !== '@default' && sugg.label !== '@relation')
+  }
+
+  // Tom: I think we allow ids on basically everything except relation fields
+  // so it doesn't need to be restricted to Int and String.
+  // These are terrible, terrible ideas of course, but you can have id DateTime @id or id Float @id.
+  // TODO: decide if we want to only suggest things that make most sense or everything that is technically possible.
+  const isAtIdAllowed = fieldType === 'Int' || fieldType === 'String' || fieldBlockType === 'enum'
+  if (!isAtIdAllowed) {
+    // id not allowed
+    suggestions = suggestions.filter((suggestion) => suggestion.label !== '@id')
+  }
+
+  const isUpdatedAtAllowed = fieldType === 'DateTime'
+  if (!isUpdatedAtAllowed) {
+    // updatedAt not allowed
+    suggestions = suggestions.filter((suggestion) => suggestion.label !== '@updatedAt')
+  }
+
+  if (currentLine.includes('@map')) {
+    suggestions = suggestions.filter((suggestion) => suggestion.label !== '@map')
+  }
+
+  return suggestions
 }
 
 /**
