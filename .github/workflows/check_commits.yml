@@ -24,15 +24,13 @@ jobs:
           node-version: 16
           cache: npm
 
-      - name: Install Dependencies
-        run: npm install
-
       - name: Clone prisma/language-tools
         run: |
           git clone --branch=stable --depth=1000 https://github.com/prisma/language-tools.git /tmp/language-tools
           cd /tmp/language-tools
           cp $GITHUB_WORKSPACE/scripts/check_for_commits.js ./scripts
           cp $GITHUB_WORKSPACE/scripts/versions/commit_sync ./scripts/versions
+          npm install
 
       - name: Check for commits
         id: check
