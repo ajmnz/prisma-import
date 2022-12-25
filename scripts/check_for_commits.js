@@ -6,9 +6,9 @@ async function checkForCommit(mode) {
   const { stdout } = await execa('git', [
     'log',
     '--pretty=%h | %s',
+    `${lastCommit}..HEAD`,
     '--perl-regexp',
     '--author=^((?!Prismo|renovate).*)$',
-    `${lastCommit}..HEAD`,
   ])
 
   const commits = stdout.split('\n').map((l) => l.split(' | '))
