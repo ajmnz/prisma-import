@@ -516,13 +516,7 @@ export function getNativeTypes(document: TextDocument, prismaType: string): Comp
   nativeTypes = nativeTypes.filter((n) => n.prisma_types.includes(prismaType))
   nativeTypes.forEach((element) => {
     if (element._number_of_args + element._number_of_optional_args !== 0) {
-      let documentation = ''
-      if (element._number_of_optional_args !== 0) {
-        documentation = `${documentation}Number of optional arguments: ${element._number_of_optional_args}.\n'`
-      }
-      if (element._number_of_args !== 0) {
-        documentation = `${documentation}Number of required arguments: ${element._number_of_args}.\n`
-      }
+      const documentation = buildDocumentation(element)
       suggestions.push({
         label: `${element.name}()`,
         kind: CompletionItemKind.TypeParameter,
@@ -539,6 +533,17 @@ export function getNativeTypes(document: TextDocument, prismaType: string): Comp
   })
 
   return suggestions
+}
+
+const buildDocumentation = (element: NativeTypeConstructors, documentation = ''): string => {
+  if (element._number_of_optional_args !== 0) {
+    documentation = `${documentation}Number of optional arguments: ${element._number_of_optional_args}.\n`
+  }
+  if (element._number_of_args !== 0) {
+    documentation = `${documentation}Number of required arguments: ${element._number_of_args}.\n`
+  }
+
+  return documentation
 }
 
 export const blockTypeToCompletionItemKind = (type: BlockType) => {
