@@ -37,18 +37,21 @@ jobs:
       - name: Check for commits
         id: check
         run: |
+          cd /tmp/language-tools
           node scripts/check_for_commits.js check
 
       - name: Set latest commit
         if: ${{ steps.check.outputs.has_commits }}
         id: latest
         run: |
+          cd /tmp/language-tools
           node scripts/check_for_commits.js last
 
       - name: Set PR body
         if: ${{ steps.check.outputs.has_commits }}
         id: pr_body
         run: |
+          cd /tmp/language-tools
           BODY=$(node scripts/check_for_commits.js)
           BODY="${BODY//'%'/'%25'}"
           BODY="${BODY//$'\n'/'%0A'}"

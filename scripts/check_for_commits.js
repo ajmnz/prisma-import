@@ -3,8 +3,7 @@ const { readVersionFile } = require('./util')
 
 async function checkForCommit(mode) {
   const lastCommit = readVersionFile({ fileName: 'commit_sync' })
-  console.log(process.cwd())
-  console.log(__dirname)
+
   const { stdout } = await execa('git', [
     'log',
     `${lastCommit}..HEAD`,
