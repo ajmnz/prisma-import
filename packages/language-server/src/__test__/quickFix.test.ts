@@ -211,7 +211,7 @@ suite('Quick Fixes', () => {
             end: { line: 15, character: 0 },
           },
           message:
-            'Error parsing attribute "@relation": The argument `references` must refer to a unique criteria in the related model. Consider adding an `@unique` attribute to the field `field` in the model `A`.',
+            'Error parsing attribute "@relation": The argument `references` must refer to a unique criterion in the related model. Consider adding an `@unique` attribute to the field `field` in the model `A`.',
           severity: DiagnosticSeverity.Error,
         },
       ]
@@ -241,7 +241,7 @@ suite('Quick Fixes', () => {
                 },
                 severity: 1,
                 message:
-                  'Error parsing attribute "@relation": The argument `references` must refer to a unique criteria in the related model. Consider adding an `@unique` attribute to the field `field` in the model `A`.',
+                  'Error parsing attribute "@relation": The argument `references` must refer to a unique criterion in the related model. Consider adding an `@unique` attribute to the field `field` in the model `A`.',
               },
             ],
             edit: {
