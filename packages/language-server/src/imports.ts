@@ -174,7 +174,6 @@ export const getImportsFromSchema = (
   }
 
   if (!errors.length) {
-    // Go ahead and append the virtual schema
     schemaWithReplacedImports += '\n'
     schemaWithReplacedImports += getVirtualSchema(document)
   }
