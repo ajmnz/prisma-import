@@ -5,10 +5,9 @@ import * as assert from 'assert'
 import { getTextDocument } from './helper'
 
 function assertLinting(expected: Diagnostic[], fixturePath: string): void {
-  const document: TextDocument = getTextDocument(fixturePath)
+  const document: TextDocument = getTextDocument(fixturePath, true)
 
   const diagnosticsResults: Diagnostic[] = handleDiagnosticsRequest(document)
-
   assert.ok(diagnosticsResults.length != 0)
   expected.forEach((expectedDiagnostic, i) => {
     const actualDiagnostic = diagnosticsResults[i]

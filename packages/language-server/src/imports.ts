@@ -170,8 +170,11 @@ export const getImportsFromSchema = (
   }
 
   if (!errors.length) {
-    schemaWithReplacedImports += '\n'
-    schemaWithReplacedImports += getVirtualSchema(document)
+    const virtualSchema = getVirtualSchema(document)
+    if (virtualSchema) {
+      schemaWithReplacedImports += '\n'
+      schemaWithReplacedImports += virtualSchema
+    }
   }
 
   return {
