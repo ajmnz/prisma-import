@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/language-server/**'
+      - 'packages/vscode/**'
+  pull_request:
+    paths-ignore:
+      - 'packages/language-server/**'
+      - 'packages/vscode/**'
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm install && npm run install:all
+
+      - name: Build packages
+        run: npm run build:vs && npm run build:ls && npm run build:cli
+
+      - name: Run Language Server tests
+        run: npm run test:ls
+
+      - name: Run VSCode extension tests
+        uses: GabrielBB/xvfb-action@v1.6
+        with:
+          run: npm run test:vs "useLocalLS"
+
+      - name: Run CLI tests
+        run: npm run test:cli

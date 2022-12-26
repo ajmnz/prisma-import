@@ -37,6 +37,8 @@
     "build:vs": "cd packages/vscode && npm run build && cd ../../",
     "build:cli": "cd packages/prisma-import && npm run build && cd ../../",
     "test:ls": "cd packages/language-server && npm run test && cd ../../",
-    "test:vs": "sh scripts/e2e.sh"
+    "test:vs": "sh scripts/e2e.sh",
+    "test:cli": "cd packages/prisma-import && npm run test && cd ../../",
+    "shell:lint": "shellcheck -x scripts/*.sh"
   }
 }

@@ -25,7 +25,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "release": "release-it"
+    "release": "release-it",
+    "test": "echo 'todo'"
   },
   "dependencies": {
     "@prisma/internals": "4.7.1",
