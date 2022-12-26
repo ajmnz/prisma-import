@@ -8,7 +8,7 @@ on:
       - 'packages/language-server/**'
       - 'packages/vscode/**'
   pull_request:
-    paths-ignore:
+    paths:
       - 'packages/language-server/**'
       - 'packages/vscode/**'
 
