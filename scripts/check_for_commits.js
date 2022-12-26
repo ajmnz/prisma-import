@@ -12,7 +12,10 @@ async function checkForCommit(mode) {
     '--author=^((?!Prismo|renovate).*)$',
   ])
 
-  const commits = stdout.split('\n').map((l) => l.split(' | '))
+  const commits = stdout
+    .split('\n')
+    .map((l) => l.split(' | '))
+    .filter(([sha]) => !!sha)
 
   if (mode === 'check') {
     console.log(`::set-output name=has_commits::${Boolean(commits.length)}`)
