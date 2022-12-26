@@ -30,12 +30,13 @@ import {
   sortLengthProperties,
   filterSortLengthBasedOnInput,
   toCompletionItems,
-  removeInvalidAttributeSuggestions,
+  filterSuggestionsForBlock,
   removeInvalidFieldSuggestions,
   getNativeTypes,
   handlePreviewFeatures,
   relationModeValues,
   blockTypeToCompletionItemKind,
+  filterSuggestionsForLine,
 } from './completionUtils'
 import listAllAvailablePreviewFeatures from '../prisma-fmt/listAllAvailablePreviewFeatures'
 import {
@@ -67,7 +68,7 @@ function getSuggestionForModelBlockAttribute(block: Block, lines: string[]): Com
     return []
   }
   // create deep copy
-  const suggestions: CompletionItem[] = removeInvalidAttributeSuggestions(klona(blockAttributes), block, lines)
+  const suggestions: CompletionItem[] = filterSuggestionsForBlock(klona(blockAttributes), block, lines)
 
   // We can filter on the datasource
   const datasourceProvider = getFirstDatasourceProvider(lines)
@@ -144,6 +145,13 @@ export function getSuggestionForFieldAttribute(
   if (block.type !== 'model') {
     return
   }
+
+  const fieldType = getFieldType(currentLine)
+  // If we don't find a field type (e.g. String, Int...), return no suggestion
+  if (!fieldType) {
+    return
+  }
+
   let suggestions: CompletionItem[] = []
 
   // Because @.?
@@ -182,36 +190,11 @@ export function getSuggestionForFieldAttribute(
 
   suggestions.push(...fieldAttributes)
 
-  const fieldType = getFieldType(currentLine)
-  // If we don't find a field type (e.g. String, Int...), return no suggestion
-  if (!fieldType) {
-    return
-  }
-
   const modelOrTypeOrEnum = getModelOrTypeOrEnumBlock(fieldType, lines)
-  if (modelOrTypeOrEnum?.type === 'type') {
-    // @default & @relation are invalid on field referencing a composite type
-    // we filter them out
-    suggestions = suggestions.filter((sugg) => sugg.label !== '@default' && sugg.label !== '@relation')
-  }
 
-  // Tom: I think we allow ids on basically everything except relation fields
-  // so it doesn't need to be restricted to Int and String.
-  // These are terrible, terrible ideas of course, but you can have id DateTime @id or id Float @id.
-  // TODO: decide if we want to only suggest things that make most sense or everything that is technically possible.
-  const isAtIdAllowed = fieldType === 'Int' || fieldType === 'String' || modelOrTypeOrEnum?.type === 'enum'
-  if (!isAtIdAllowed) {
-    // id not allowed
-    suggestions = suggestions.filter((sugg) => sugg.label !== '@id')
-  }
+  suggestions = filterSuggestionsForLine(suggestions, currentLine, fieldType, modelOrTypeOrEnum?.type)
 
-  const isUpdatedAtAllowed = fieldType === 'DateTime'
-  if (!isUpdatedAtAllowed) {
-    // updatedAt not allowed
-    suggestions = suggestions.filter((sugg) => sugg.label !== '@updatedAt')
-  }
-
-  suggestions = removeInvalidAttributeSuggestions(suggestions, block, lines)
+  suggestions = filterSuggestionsForBlock(suggestions, block, lines)
 
   return {
     items: suggestions,

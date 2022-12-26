@@ -2045,7 +2045,7 @@ suite('Completions', function () {
         provider: 'postgresql',
         schema: /* Prisma */ `
           model Post {
-            id Int @id @default()
+            id Int @id @default() @map("foobar")
             email String? @unique
             name String |
           }`,
@@ -2059,6 +2059,19 @@ suite('Completions', function () {
             fieldAttributeRelation,
             fieldAttributeIgnore,
           ],
+        },
+      })
+      assertCompletion({
+        schema: /* Prisma */ `
+          model Post {
+            id Int @id @default()
+            email String? @unique
+            name String @map("_name")|
+          }
+        `,
+        expected: {
+          isIncomplete: false,
+          items: [fieldAttributeUnique, fieldAttributeDefault, fieldAttributeRelation, fieldAttributeIgnore],
         },
       })
     })

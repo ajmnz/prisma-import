@@ -20,7 +20,7 @@ async function checkForCommit(mode) {
   }
 
   if (mode === 'last') {
-    console.log(`::set-output name=latest_commit::${commits[commits.length - 1][0]}`)
+    console.log(`::set-output name=latest_commit::${commits[0][0]}`)
     return
   }
 
