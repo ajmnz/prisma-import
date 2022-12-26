@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 7
     needs: [check_commits]
-    if: ${{ needs.check_commits.outputs.has_commits }}
+    if: needs.check_commits.outputs.has_commits == true
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -76,12 +76,12 @@ jobs:
           sh scripts/check_for_pr.sh sync/${{ needs.check_commits.outputs.latest_commit }}
 
       - name: Update latest commit
-        if: ${{ steps.check.outputs.can_create_pr }}
+        if: steps.check.outputs.can_create_pr == true
         run: |
           echo "${{ needs.check_commits.outputs.latest_commit }}" > scripts/versions/commit_sync
 
       - name: Create Pull Request
-        if: ${{ steps.check.outputs.can_create_pr }}
+        if: steps.check.outputs.can_create_pr == true
         uses: peter-evans/create-pull-request@v4
         with:
           title: '[sync] New commits in prisma/language-tools'
