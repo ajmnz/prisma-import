@@ -17,9 +17,8 @@ async function checkForCommit(mode) {
     .map((l) => l.split(' | '))
     .filter(([sha]) => !!sha)
 
-  console.log(commits)
-
   if (mode === 'check') {
+    console.log(`has_commits::${Boolean(commits.length)}`)
     console.log(`::set-output name=has_commits::${Boolean(commits.length)}`)
     return
   }
