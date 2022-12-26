@@ -46,10 +46,6 @@ export const getImportsFromSchema = (
     return `//${match}`
   })
 
-  if (!importStatements.length) {
-    return { schema, rangeOffset: 0, importAst: [], errors: [] }
-  }
-
   const documentLines = convertDocumentTextToTrimmedLineArray(document)
 
   const importAst: ImportAst[] = []
