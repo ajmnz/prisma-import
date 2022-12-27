@@ -3,7 +3,7 @@
   "description": "Prisma Language Server",
   "displayName": "Prisma Language Server",
   "author": "Arnau Jiménez",
-  "version": "4.8.1-pre.0",
+  "version": "4.8.1-pre.1",
   "license": "Apache-2.0",
   "publisher": "ajmnz",
   "files": [
