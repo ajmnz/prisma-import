@@ -441,7 +441,7 @@
       ]
     },
     "import_block_definition": {
-      "match": "^\\s*(import)\\s*({)\\s*(([A-Za-z][A-Za-z0-9]+,?\\s*)+)\\s*(})\\s*(from)\\s*(\".*\")",
+      "match": "^\\s*(import)\\s*({)\\s*(([A-Za-z][A-Za-z0-9]*,?\\s*)+)\\s*(})\\s*(from)\\s*(\".*\")",
       "name": "source.prisma.embedded.source",
       "captures": {
         "1": {
