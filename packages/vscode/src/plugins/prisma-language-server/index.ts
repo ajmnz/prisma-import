@@ -47,11 +47,21 @@ const isDebugMode = () => process.env.VSCODE_DEBUG_MODE === 'true'
 const isE2ETestOnPullRequest = () => process.env.PRISMA_USE_LOCAL_LS === 'true'
 
 const sendSchemasNotification = async (client: LanguageClient) => {
+  let workspaceFiles = await workspace.findFiles('**/*.prisma', '**/node_modules/**')
+
+  const hasExcluded = workspace.getConfiguration('prisma.import').has('exclude')
+  if (hasExcluded) {
+    const excludeGlobs = workspace.getConfiguration('prisma.import').get<string[]>('exclude')
+    if (excludeGlobs && Array.isArray(excludeGlobs) && excludeGlobs.length) {
+      workspaceFiles = workspaceFiles.filter((uri) => {
+        return !excludeGlobs.some((glob) => minimatch(uri.fsPath, glob))
+      })
+    }
+  }
+
   return client.sendNotification(
     'prisma/schemas',
-    (await workspace.findFiles('**/*.prisma', '**/node_modules/**')).map((uri) =>
-      client.code2ProtocolConverter.asUri(uri),
-    ),
+    workspaceFiles.map((uri) => client.code2ProtocolConverter.asUri(uri)),
   )
 }
 
@@ -66,7 +76,8 @@ const activateClient = (
   void client.onReady().then(async () => {
     await sendSchemasNotification(client)
 
-    const onChange = debounce(sendSchemasNotification, 1000)
+    const delay = workspace.getConfiguration('prisma.import').get<number>('watcherDebounceDelay')
+    const onChange = debounce(sendSchemasNotification, delay ?? 1000)
 
     workspace.onDidCreateFiles(async (e) => {
       if (e.files.filter((uri) => uri.fsPath.endsWith('.prisma')).length) {
@@ -96,6 +107,7 @@ const activateClient = (
 const startFileWatcher = (rootPath: string) => {
   console.debug('Starting File Watcher')
   // https://github.com/fabiospampinato/watcher
+  console.log(rootPath)
   return new FileWatcher(rootPath, {
     debounce: 500,
     // limits how many levels of subdirectories will be traversed.

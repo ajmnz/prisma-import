@@ -122,6 +122,23 @@
           ],
           "default": "off",
           "description": "Setting for logging between the VS Code extension and the language server."
+        },
+        "prisma.import.exclude": {
+          "scope": "window",
+          "type": "array",
+          "description": "Array of glob patterns to ignore when resolving imports",
+          "examples": [
+            [
+              "**/generated/**",
+              "**/schema.prisma"
+            ]
+          ]
+        },
+        "prisma.import.watcherDebounceDelay": {
+          "scope": "window",
+          "type": "number",
+          "description": "Delay (in ms) to trigger an import resolution on file change. A lower value will impact overall performance.",
+          "default": 1000
         }
       }
     },
