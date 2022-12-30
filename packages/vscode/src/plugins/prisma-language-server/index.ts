@@ -107,7 +107,7 @@ const activateClient = (
 const startFileWatcher = (rootPath: string) => {
   console.debug('Starting File Watcher')
   // https://github.com/fabiospampinato/watcher
-  console.log(rootPath)
+
   return new FileWatcher(rootPath, {
     debounce: 500,
     // limits how many levels of subdirectories will be traversed.
