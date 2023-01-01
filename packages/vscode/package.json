@@ -164,14 +164,14 @@
     "@types/glob": "8.0.0",
     "@types/mocha": "10.0.1",
     "@types/vscode": "1.74.0",
-    "@vscode/test-electron": "2.2.0",
-    "@vscode/vsce": "2.15.0",
+    "@vscode/test-electron": "2.2.1",
+    "@vscode/vsce": "2.16.0",
     "is-ci": "3.0.1",
-    "mocha": "10.1.0",
-    "ovsx": "0.5.2",
-    "release-it": "15.5.1",
+    "mocha": "10.2.0",
+    "ovsx": "0.7.1",
+    "release-it": "15.6.0",
     "rimraf": "3.0.2",
-    "typescript": "4.9.3"
+    "typescript": "4.9.4"
   },
   "gitHead": "7d51b157647fe1705813a30d1a77b8ccf136b8d4",
   "publishConfig": {
