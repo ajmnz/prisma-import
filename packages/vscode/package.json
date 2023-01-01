@@ -163,7 +163,7 @@
   "devDependencies": {
     "@types/glob": "8.0.0",
     "@types/mocha": "10.0.1",
-    "@types/vscode": "1.56.0",
+    "@types/vscode": "1.74.0",
     "@vscode/test-electron": "2.2.0",
     "@vscode/vsce": "2.15.0",
     "is-ci": "3.0.1",
