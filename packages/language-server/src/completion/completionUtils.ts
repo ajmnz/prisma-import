@@ -505,7 +505,7 @@ export function handlePreviewFeatures(
 }
 
 export function getNativeTypes(document: TextDocument, prismaType: string): CompletionItem[] {
-  let nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document.getText())
+  let nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document)
 
   if (nativeTypes.length === 0) {
     console.log('Did not receive any native type suggestions from prisma-fmt call.')

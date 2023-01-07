@@ -1,4 +1,7 @@
 import prismaFmt from '@prisma/prisma-fmt-wasm'
+import { fileURLToPath } from 'url'
+import { TextDocument } from 'vscode-languageserver-textdocument'
+import { getAllSchemas } from '../imports'
 
 export interface NativeTypeConstructors {
   name: string
@@ -8,9 +11,19 @@ export interface NativeTypeConstructors {
 }
 
 export default function nativeTypeConstructors(
-  text: string,
+  document: TextDocument,
   onError?: (errorMessage: string) => void,
 ): NativeTypeConstructors[] {
+  let text = document.getText()
+  const datasourceSchema = getAllSchemas().find((s) => s.blocks.some((b) => b.type === 'datasource'))
+  if (datasourceSchema && datasourceSchema.path !== fileURLToPath(document.uri)) {
+    const dataSourceBlock = datasourceSchema?.blocks.find((b) => b.type === 'datasource')
+    if (dataSourceBlock) {
+      text += '\n'
+      text += datasourceSchema.document.getText(dataSourceBlock.range)
+    }
+  }
+
   try {
     const result = prismaFmt.native_types(text)
     return JSON.parse(result) as NativeTypeConstructors[]
