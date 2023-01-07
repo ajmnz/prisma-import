@@ -277,7 +277,7 @@ export function handleDocumentFormatting(
   applyEdits: (edit: WorkspaceEdit) => Promise<void>,
   onError?: (errorMessage: string) => void,
 ): TextEdit[] {
-  let text = document.getText().replace(/import.*/g, (a) => {
+  let text = document.getText().replace(/import\s*{.*}.*/g, (a) => {
     return `//_${a}`
   })
 
