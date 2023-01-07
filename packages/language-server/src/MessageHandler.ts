@@ -277,7 +277,7 @@ export function handleDocumentFormatting(
   applyEdits: (edit: WorkspaceEdit) => Promise<void>,
   onError?: (errorMessage: string) => void,
 ): TextEdit[] {
-  let text = document.getText().replace(/import.*/g, (a) => {
+  let text = document.getText().replace(/import\s*{.*}.*/g, (a) => {
     return `//_${a}`
   })
 
@@ -346,7 +346,7 @@ export function handleDocumentFormatting(
         .getText({
           start: { line: 0, character: 0 },
           end: {
-            line: virtualSchemaStartLine !== -1 ? virtualSchemaStartLine - 1 : document.lineCount - 1,
+            line: virtualSchemaStartLine !== -1 ? virtualSchemaStartLine - 2 : document.lineCount - 1,
             character: Number.MAX_SAFE_INTEGER,
           },
         })

@@ -4,6 +4,7 @@ import nativeTypeConstructors, { NativeTypeConstructors } from './prisma-fmt/nat
 import { PreviewFeatures } from './previewFeatures'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { getAllSchemas } from './imports'
 
 export type BlockType = 'generator' | 'datasource' | 'model' | 'type' | 'enum' | 'import'
 export type ImportedBlock = { name: string; range: Range }
@@ -290,7 +291,7 @@ export function getValuesInsideSquareBrackets(line: string): string[] {
 }
 
 export function declaredNativeTypes(document: TextDocument): boolean {
-  const nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document.getText())
+  const nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document)
   if (nativeTypes.length === 0) {
     return false
   }
@@ -458,12 +459,26 @@ export function positionIsAfterFieldAndType(
 }
 
 export function getFirstDatasourceName(lines: string[]): string | undefined {
+  let datasourceName: string | undefined = undefined
+
   const datasourceBlockFirstLine = lines.find((l) => l.startsWith('datasource') && l.includes('{'))
-  if (!datasourceBlockFirstLine) {
-    return undefined
+  if (datasourceBlockFirstLine) {
+    const indexOfBracket = datasourceBlockFirstLine.indexOf('{')
+    datasourceName = datasourceBlockFirstLine.slice('datasource'.length, indexOfBracket).trim()
   }
-  const indexOfBracket = datasourceBlockFirstLine.indexOf('{')
-  return datasourceBlockFirstLine.slice('datasource'.length, indexOfBracket).trim()
+
+  if (!datasourceName) {
+    // Attempt to get it from another schema
+    const datasourceSchema = getAllSchemas().find((s) => s.blocks.some((b) => b.type === 'datasource'))
+    if (datasourceSchema) {
+      const dataSourceBlock = datasourceSchema?.blocks.find((b) => b.type === 'datasource')
+      if (dataSourceBlock) {
+        datasourceName = dataSourceBlock.name
+      }
+    }
+  }
+
+  return datasourceName
 }
 
 export function getFirstDatasourceProvider(lines: string[]): string | undefined {

@@ -55,7 +55,7 @@ export const getVirtualSchema = (document: TextDocument) => {
     nonVirtualizableBlockNames.push(...importedBlockNames)
   }
 
-  const virtualSchema = ['// begin_virtual_schema\n']
+  const virtualSchema = ['\n// begin_virtual_schema\n']
   const visitedBlocks: string[] = [...documentSchemaBlockNames]
 
   // Find datasource
