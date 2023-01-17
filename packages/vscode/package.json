@@ -2,7 +2,7 @@
   "name": "prisma-import",
   "displayName": "Prisma Import",
   "description": "Adds import statements to your Prisma schemas",
-  "version": "4.8.201",
+  "version": "4.9.0",
   "license": "Apache-2.0",
   "icon": "logo_white.png",
   "engines": {

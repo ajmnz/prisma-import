@@ -3,7 +3,7 @@
   "description": "Prisma Language Server",
   "displayName": "Prisma Language Server",
   "author": "Arnau Jiménez",
-  "version": "4.8.2-pre.1",
+  "version": "4.9.0",
   "license": "Apache-2.0",
   "publisher": "ajmnz",
   "files": [
@@ -13,8 +13,8 @@
     "node": ">=14"
   },
   "prisma": {
-    "enginesVersion": "d6e67a83f971b175a593ccc12e15c4a757f93ffe",
-    "cliVersion": "4.8.1"
+    "enginesVersion": "ceb5c99003b99c9ee2c1d2e618e359c14aef2ea5",
+    "cliVersion": "4.9.0"
   },
   "bin": "dist/src/bin.js",
   "repository": {
@@ -32,7 +32,7 @@
   "main": "./dist/index.js",
   "typings": "dist/src/index",
   "dependencies": {
-    "@prisma/prisma-fmt-wasm": "4.8.0-61.d6e67a83f971b175a593ccc12e15c4a757f93ffe",
+    "@prisma/prisma-fmt-wasm": "4.9.0-42.ceb5c99003b99c9ee2c1d2e618e359c14aef2ea5",
     "@types/js-levenshtein": "1.1.1",
     "js-levenshtein": "1.1.6",
     "klona": "2.0.5",
