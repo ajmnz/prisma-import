@@ -35,10 +35,10 @@
     "@prisma/prisma-fmt-wasm": "4.11.0-57.8fde8fef4033376662cad983758335009d522acb",
     "@types/js-levenshtein": "1.1.1",
     "js-levenshtein": "1.1.6",
-    "klona": "2.0.5",
+    "klona": "2.0.6",
     "nyc": "15.1.0",
-    "vscode-languageserver": "8.0.2",
-    "vscode-languageserver-textdocument": "1.0.7"
+    "vscode-languageserver": "8.1.0",
+    "vscode-languageserver-textdocument": "1.0.8"
   },
   "devDependencies": {
     "@types/mocha": "10.0.1",
