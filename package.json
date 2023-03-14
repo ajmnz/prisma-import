@@ -12,7 +12,7 @@
     "lint-staged": "13.1.2",
     "pinst": ">=2",
     "prettier": "2.8.4",
-    "execa": "5.1.1",
+    "execa": "7.1.1",
     "p-retry": "4.6.2",
     "semver": "7.3.8"
   },
