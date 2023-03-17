@@ -186,6 +186,7 @@ export function quickFix(textDocument: TextDocument, params: CodeActionParams): 
           'datasource',
           'generator',
           'import',
+          'extend',
         ])
         if (spellingSuggestion) {
           codeActions.push({

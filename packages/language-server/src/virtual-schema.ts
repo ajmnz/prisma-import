@@ -29,6 +29,8 @@ export const getVirtualSchema = (document: TextDocument) => {
     .filter((b) => ['enum', 'type', 'model'].includes(b.type))
     .map((b) => b.name)
 
+  const documentSchemaExtendBlocks = documentSchema.blocks.filter((b) => b.type === 'extend')
+
   // Find direct imports in document schema so we can add
   // them as non-virtualized
 
@@ -161,6 +163,16 @@ export const getVirtualSchema = (document: TextDocument) => {
 
           searchBlocks(importBlockSchema, [fieldBlockName])
           continue
+        }
+      }
+
+      for (const extendedBlock of documentSchemaExtendBlocks) {
+        if (new RegExp(`(type|model) ${extendedBlock.name}`, 'g').test(blockText)) {
+          const extendedBody = document.getText(extendedBlock.range).split('\n')
+          extendedBody.shift() // remove block declaration line
+          extendedBody.pop() // remove block closing line
+          blockText = blockText.replace('}', `${extendedBody.join('\n')}\n}`)
+          break
         }
       }
 

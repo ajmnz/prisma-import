@@ -33,18 +33,45 @@ interface ImportAst {
   block: Block
 }
 
-export const getImportsFromSchema = (
-  document: TextDocument,
-): { schema: string; rangeOffset: number; importAst: ImportAst[]; errors: LinterError[] } => {
-  const schema = document.getText(fullDocumentRange(document))
+export const getImportsFromSchema = (document: TextDocument) => {
+  const schemaText = document.getText(fullDocumentRange(document))
 
   const importStatements: string[] = []
-  let rangeOffset = 0
-  let schemaWithReplacedImports = schema.replace(/^(?<=\s*)(import\s*{.*)/gm, (match) => {
+  const rangeOffsets: { position: number; offset: number }[] = []
+  let schemaWithReplacedImports = schemaText.replace(/^(?<=\s*)(import\s*{.*)/gm, (match, ...rest) => {
     importStatements.push(match)
-    rangeOffset += 2
+    const position = rest.find((position): position is number => typeof position === 'number')!
+    rangeOffsets.push({ position, offset: 2 })
     return `//${match}`
   })
+
+  const documentAbsolutePath = fileURLToPath(document.uri)
+  const schema = getAllSchemas().find((schema) => schema.path === documentAbsolutePath)
+  const extendBlocks = schema?.blocks.filter((block) => block.type === 'extend') ?? []
+
+  extendBlocks.forEach((block) => {
+    const lines = document.getText(block.range).split(/\r?\n/)
+    const commentedLines = lines.map((line) => `//${line}`).join('\n')
+    let lineStartPosition = document.offsetAt(block.range.start)
+
+    for (const line of lines) {
+      rangeOffsets.push({ position: lineStartPosition, offset: 2 })
+      lineStartPosition += line.length
+    }
+    schemaWithReplacedImports = schemaWithReplacedImports.replace(document.getText(block.range), commentedLines)
+  })
+
+  function getPositionInVirtualSchema(position: number) {
+    let totalOffset = 0
+    for (const rangeOffset of rangeOffsets) {
+      if (position > rangeOffset.position) {
+        totalOffset += rangeOffset.offset
+      } else {
+        break
+      }
+    }
+    return totalOffset + position
+  }
 
   const documentLines = convertDocumentTextToTrimmedLineArray(document)
 
@@ -59,8 +86,8 @@ export const getImportsFromSchema = (
     if (!importStatementMatch?.groups?.entities || !importStatementMatch?.groups?.path) {
       errors.push(
         ...getImportStatementLineIndexes(importStatement, documentLines).map(({ lineId: line }) => ({
-          start: document.offsetAt({ line, character: 0 }) + rangeOffset,
-          end: document.offsetAt({ line, character: importStatement.length }) + rangeOffset,
+          start: getPositionInVirtualSchema(document.offsetAt({ line, character: 0 })),
+          end: getPositionInVirtualSchema(document.offsetAt({ line, character: importStatement.length })),
           text: 'This import is invalid. Imports should look like \'import { Model, Enum, Whatever } from "./path/to/schema"\'.',
           is_warning: false,
         })),
@@ -78,9 +105,10 @@ export const getImportsFromSchema = (
           const pathIndex = lineText.indexOf(relativeImportPathDirty)
 
           return {
-            start: document.offsetAt({ line: lineId, character: pathIndex }) + rangeOffset,
-            end:
-              document.offsetAt({ line: lineId, character: pathIndex + relativeImportPathDirty.length }) + rangeOffset,
+            start: getPositionInVirtualSchema(document.offsetAt({ line: lineId, character: pathIndex })),
+            end: getPositionInVirtualSchema(
+              document.offsetAt({ line: lineId, character: pathIndex + relativeImportPathDirty.length }),
+            ),
             text: `This import path is invalid. Paths should not include the \'.prisma\' extension. Change it to \"${relativeImportPathDirty.replace(
               '.prisma',
               '',
@@ -101,8 +129,10 @@ export const getImportsFromSchema = (
         ...getImportStatementLineIndexes(importStatement, documentLines).map(({ lineId, lineText }) => {
           const pathIndex = lineText.indexOf(relativeImportPathDirty)
           return {
-            start: document.offsetAt({ line: lineId, character: pathIndex }) + rangeOffset,
-            end: document.offsetAt({ line: lineId, character: pathIndex + relativeImportPath.length }) + rangeOffset,
+            start: getPositionInVirtualSchema(document.offsetAt({ line: lineId, character: pathIndex })),
+            end: getPositionInVirtualSchema(
+              document.offsetAt({ line: lineId, character: pathIndex + relativeImportPath.length }),
+            ),
             text: `Cannot find schema at '${relativeImportPath}'`,
             is_warning: false,
           }
@@ -124,8 +154,8 @@ export const getImportsFromSchema = (
           const lastBracket = lineText.indexOf('}')
 
           return {
-            start: document.offsetAt({ line: lineId, character: firstBracket }) + rangeOffset,
-            end: document.offsetAt({ line: lineId, character: lastBracket + 1 }) + rangeOffset,
+            start: getPositionInVirtualSchema(document.offsetAt({ line: lineId, character: firstBracket })),
+            end: getPositionInVirtualSchema(document.offsetAt({ line: lineId, character: lastBracket + 1 })),
             text: `Empty imports are useless, either import a block or remove this line.`,
             is_warning: true,
           }
@@ -150,8 +180,10 @@ export const getImportsFromSchema = (
             const blockIndex = lineText.indexOf(blockName)
 
             return {
-              start: document.offsetAt({ line: lineId, character: blockIndex }) + rangeOffset,
-              end: document.offsetAt({ line: lineId, character: blockIndex + blockName.length }) + rangeOffset,
+              start: getPositionInVirtualSchema(document.offsetAt({ line: lineId, character: blockIndex })),
+              end: getPositionInVirtualSchema(
+                document.offsetAt({ line: lineId, character: blockIndex + blockName.length }),
+              ),
               text: `'${absoluteImportPath}' has no block named "${blockName}".`,
               is_warning: false,
             }
@@ -169,18 +201,67 @@ export const getImportsFromSchema = (
     }
   }
 
-  if (!errors.length) {
-    const virtualSchema = getVirtualSchema(document)
-    if (virtualSchema) {
-      schemaWithReplacedImports += '\n'
-      schemaWithReplacedImports += virtualSchema
+  for (const extendBlock of extendBlocks) {
+    const extendedImportedBlock = importAst.find(
+      ({ block }) => ['model', 'type'].includes(block.type) && block.name === extendBlock.name,
+    )
+    if (extendedImportedBlock) {
+      const importedBlockSchema = getAllSchemas().find((schema) => schema.path === extendedImportedBlock.path)
+
+      if (!importedBlockSchema) {
+        continue
+      }
+
+      const importedBlockText = importedBlockSchema.document.getText(extendedImportedBlock.block.range)
+      const importedBlockLines = importedBlockText.split('\n')
+      const importedBlockBodyText = importedBlockLines.join('\n')
+      const importedBlockProperties = importedBlockBodyText.match(/(?<=\n\s*)(\w+)\b/g)
+
+      if (!importedBlockProperties) {
+        continue
+      }
+
+      const extendBlockText = document.getText(extendBlock.range)
+      const extendBlockLines = extendBlockText.split('\n')
+      const extendBlockBodyText = extendBlockLines.join('\n')
+      const extendBlockProperties = extendBlockBodyText.match(/(?<=\n\s*)(\w+)\b/g)
+
+      if (!extendBlockProperties) {
+        continue
+      }
+
+      for (const prop of extendBlockProperties) {
+        if (importedBlockProperties.includes(prop)) {
+          const offset = extendBlockText.search(new RegExp(`(?<=\\n\\s*)(${prop})\\b`, 'g'))
+
+          errors.push({
+            start: getPositionInVirtualSchema(document.offsetAt(extendBlock.range.start) + offset),
+            end: getPositionInVirtualSchema(document.offsetAt(extendBlock.range.start) + offset + prop.length),
+            text: `Field ${prop} is already defined on ${extendedImportedBlock.block.type} ${extendedImportedBlock.block.name}.`,
+            is_warning: false,
+          })
+        }
+      }
+    } else {
+      errors.push({
+        start: getPositionInVirtualSchema(document.offsetAt(extendBlock.nameRange.start)),
+        end: getPositionInVirtualSchema(document.offsetAt(extendBlock.nameRange.end)),
+        text: `There is no imported block named ${extendBlock.name}. Local blocks can't be extended.`,
+        is_warning: false,
+      })
     }
+  }
+
+  const virtualSchema = getVirtualSchema(document)
+  if (virtualSchema) {
+    schemaWithReplacedImports += '\n'
+    schemaWithReplacedImports += virtualSchema
   }
 
   return {
     importAst,
     schema: schemaWithReplacedImports,
-    rangeOffset,
+    getPositionInVirtualSchema: getPositionInVirtualSchema,
     errors,
   }
 }

@@ -229,7 +229,7 @@ export function getSuggestionsForFieldTypes(
     const importableSchemas = getAllSchemas().filter((s) => s.path !== fileURLToPath(document.uri))
 
     for (const schema of importableSchemas) {
-      const importableBlocks = schema.blocks.filter((b) => ['enum', 'model', 'type'].includes(b.type))
+      const importableBlocks = schema.blocks.filter((b) => ['enum', 'model', 'type', 'extend'].includes(b.type))
       const relativeSchemaPath = absoluteToRelativePath(document, schema.path)
 
       for (const block of importableBlocks) {
@@ -1150,7 +1150,7 @@ export function getSuggestionsForImportBlocks(document: TextDocument, currentLin
 
   return {
     items: schemaMatch.blocks
-      .filter((b) => ['enum', 'model', 'type'].includes(b.type))
+      .filter((b) => ['enum', 'model', 'type', 'extend'].includes(b.type))
       .map((b) => ({
         kind: blockTypeToCompletionItemKind(b.type),
         label: b.name,

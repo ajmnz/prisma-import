@@ -6,7 +6,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { getAllSchemas } from './imports'
 
-export type BlockType = 'generator' | 'datasource' | 'model' | 'type' | 'enum' | 'import'
+export type BlockType = 'generator' | 'datasource' | 'model' | 'type' | 'enum' | 'import' | 'extend'
 export type ImportedBlock = { name: string; range: Range }
 export class Block {
   type: BlockType
@@ -134,7 +134,7 @@ export function* getBlocks(lines: string[]): Generator<Block, void, void> {
   let blockType = ''
   let blockNameRange: Range | undefined
   let blockStart: Position = Position.create(0, 0)
-  const allowedBlockIdentifiers: BlockType[] = ['model', 'type', 'enum', 'datasource', 'generator']
+  const allowedBlockIdentifiers: BlockType[] = ['model', 'type', 'enum', 'extend', 'datasource', 'generator']
 
   for (const [key, item] of lines.entries()) {
     if (item.startsWith('import')) {

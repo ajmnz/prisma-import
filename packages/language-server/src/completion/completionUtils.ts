@@ -554,5 +554,6 @@ export const blockTypeToCompletionItemKind = (type: BlockType) => {
     datasource: CompletionItemKind.Struct,
     generator: CompletionItemKind.Function,
     import: CompletionItemKind.Struct,
+    extend: CompletionItemKind.Class,
   }[type]
 }

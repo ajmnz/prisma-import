@@ -79,7 +79,7 @@ export function handleDiagnosticsRequest(
   document: TextDocument,
   onError?: (errorMessage: string) => void,
 ): Diagnostic[] {
-  const { schema, importAst, rangeOffset, errors } = getImportsFromSchema(document)
+  const { schema, importAst, getPositionInVirtualSchema, errors } = getImportsFromSchema(document)
   const documentText = document.getText()
 
   const res = lint(schema, (errorMessage: string) => {
@@ -123,25 +123,28 @@ export function handleDiagnosticsRequest(
             .find(([line]) => line.includes(match.relativePath))
 
           if (lineMatch) {
-            diag.start =
+            diag.start = getPositionInVirtualSchema(
               document.offsetAt({
                 line: lineMatch[1],
                 character: 0,
-              }) + rangeOffset
-            diag.end =
+              }),
+            )
+            diag.end = getPositionInVirtualSchema(
               document.offsetAt({
                 line: lineMatch[1],
                 character: Number.MAX_SAFE_INTEGER,
-              }) + rangeOffset
+              }),
+            )
           }
         }
       }
     }
 
+    const offset = getPositionInVirtualSchema(diag.start) - diag.start
     const diagnostic: Diagnostic = {
       range: {
-        start: document.positionAt(diag.start - rangeOffset),
-        end: document.positionAt(diag.end - rangeOffset),
+        start: document.positionAt(diag.start - offset),
+        end: document.positionAt(diag.end - offset),
       },
       message: diag.text,
       source: '',
@@ -197,7 +200,8 @@ export function handleDefinitionRequest(document: TextDocument, params: Declarat
         (line.includes('model') && line.includes(word)) ||
         (line.includes('type') && line.includes(word)) ||
         (line.includes('enum') && line.includes(word)) ||
-        (line.includes('import') && line.includes(word))
+        (line.includes('import') && line.includes(word)) ||
+        (line.includes('extend') && line.includes(word))
       ) {
         return index
       }
@@ -280,13 +284,25 @@ export function handleDocumentFormatting(
   let text = document.getText().replace(/import\s*{.*}.*/g, (a) => {
     return `//_${a}`
   })
+  const documentAbsolutePath = fileURLToPath(document.uri)
+  const documentSchema = getAllSchemas().find((schema) => schema.path === documentAbsolutePath)
+
+  if (documentSchema) {
+    documentSchema.blocks
+      .filter((block) => block.type === 'extend')
+      .forEach((block) => {
+        const lines = document.getText(block.range).split(/\r?\n/)
+        const commentedLines = lines.map((line) => `//_${line}`).join('\n')
+        text = text.replace(document.getText(block.range), commentedLines)
+      })
+  }
 
   const virtualSchema = getVirtualSchema(document)
   if (virtualSchema) {
     text += virtualSchema
   }
 
-  const formatted = format(text, params, onError).replace(/\/\/_import/g, 'import')
+  const formatted = format(text, params, onError).replace(/\/\/_/g, '')
   const formattedDocument = TextDocument.create(document.uri, 'prisma', 1, formatted)
   const formattedDocumentLines = convertDocumentTextToTrimmedLineArray(formattedDocument)
   const virtualSchemaStartLine = formattedDocumentLines.findIndex((value) => value.includes('// begin_virtual_schema'))
@@ -475,6 +491,7 @@ function localCompletions(params: CompletionParams, document: TextDocument): Com
   switch (foundBlock.type) {
     case 'model':
     case 'type':
+    case 'extend':
       // check if inside attribute
       if (isInsideAttribute(currentLineUntrimmed, position, '()')) {
         return getSuggestionsForInsideRoundBrackets(currentLineUntrimmed, lines, document, position, foundBlock)
@@ -628,6 +645,7 @@ export function handleDocumentSymbol(params: DocumentSymbolParams, document: Tex
       datasource: SymbolKind.Struct,
       generator: SymbolKind.Function,
       import: SymbolKind.Namespace,
+      extend: SymbolKind.Class,
     }[block.type],
     name: block.name,
     range: block.range,

@@ -186,6 +186,7 @@ suite('Completions', function () {
             { label: 'model', kind: CompletionItemKind.Class },
             { label: 'import', kind: CompletionItemKind.Class },
             { label: 'enum', kind: CompletionItemKind.Class },
+            { label: 'extend', kind: CompletionItemKind.Class },
           ],
         },
       })
@@ -206,6 +207,7 @@ suite('Completions', function () {
             { label: 'generator', kind: CompletionItemKind.Class },
             { label: 'model', kind: CompletionItemKind.Class },
             { label: 'import', kind: CompletionItemKind.Class },
+            { label: 'enum', kind: CompletionItemKind.Class },
           ],
         },
       })

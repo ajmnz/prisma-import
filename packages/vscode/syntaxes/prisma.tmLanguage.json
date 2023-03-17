@@ -24,6 +24,9 @@
     },
     {
       "include": "#import_block_definition"
+    },
+    {
+      "include": "#extend_block_definition"
     }
   ],
   "repository": {
@@ -467,6 +470,38 @@
         }
       },
       "patterns": []
+    },
+    "extend_block_definition": {
+      "begin": "^\\s*(extend)\\s+([A-Za-z][\\w]*)\\s*({)",
+      "name": "source.prisma.embedded.source",
+      "beginCaptures": {
+        "1": {
+          "name": "storage.type.model.prisma"
+        },
+        "2": {
+          "name": "entity.name.type.model.prisma"
+        },
+        "3": {
+          "name": "punctuation.definition.tag.prisma"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#triple_comment"
+        },
+        {
+          "include": "#double_comment"
+        },
+        {
+          "include": "#field_definition"
+        }
+      ],
+      "end": "\\s*\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.tag.prisma"
+        }
+      }
     }
   }
 }

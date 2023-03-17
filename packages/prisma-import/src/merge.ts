@@ -3,6 +3,27 @@ import { ensureDirectoryExistence, readFile, writeFile } from './util'
 import { format } from '@prisma/prisma-fmt-wasm'
 import { pathToFileURL } from 'url'
 
+function removeExtendBlocks(text: string): string {
+  const lines = text.split('\n')
+  const result: string[] = []
+  let insideExtendBlock = false
+
+  for (const line of lines) {
+    const isExtendBlock = !insideExtendBlock && line.startsWith('extend ')
+    const isEndOfBlock = insideExtendBlock && line === '}'
+
+    if (isExtendBlock) {
+      insideExtendBlock = true
+    } else if (isEndOfBlock) {
+      insideExtendBlock = false
+    } else if (!insideExtendBlock) {
+      result.push(line)
+    }
+  }
+
+  return result.join('\n')
+}
+
 export const merge = async (schemaPaths: string[], outputPath: string, dry: boolean) => {
   const headerContent = [
     '//',
@@ -21,6 +42,8 @@ export const merge = async (schemaPaths: string[], outputPath: string, dry: bool
       .split('\n')
       .filter((line) => !/^(?<=\s*)(import\s*{.*)/g.test(line))
       .join('\n')
+
+    content = removeExtendBlocks(content)
 
     const pushedContent: string[] = []
 
