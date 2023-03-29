@@ -26,7 +26,7 @@ jobs:
 
       - name: Clone prisma/language-tools
         run: |
-          git clone --branch=stable --depth=1000 https://github.com/prisma/language-tools.git /tmp/language-tools
+          git clone --branch=stable --shallow-since="2022-12-05T00:00:00Z" https://github.com/prisma/language-tools.git /tmp/language-tools
           cd /tmp/language-tools
           cp $GITHUB_WORKSPACE/scripts/check_for_commits.js ./scripts
           cp $GITHUB_WORKSPACE/scripts/versions/commit_sync ./scripts/versions

@@ -4,18 +4,12 @@ const { readVersionFile } = require('./util')
 async function checkForCommit(mode) {
   const lastCommit = readVersionFile({ fileName: 'commit_sync' })
 
-  const { stdout } = await execa('git', [
-    'log',
-    `${lastCommit}..HEAD`,
-    '--pretty=%h | %s',
-    '--perl-regexp',
-    '--author=^((?!Prismo|renovate).*)$',
-  ])
+  const { stdout } = await execa('git', ['log', `${lastCommit}..HEAD`, `--pretty=%h | %s | %an`])
 
   const commits = stdout
     .split('\n')
     .map((l) => l.split(' | '))
-    .filter(([sha]) => !!sha)
+    .filter(([sha, _, author]) => !['renovate', 'Prismo'].includes(author) && !!sha)
 
   if (mode === 'check') {
     console.log(`has_commits::${Boolean(commits.length)}`)
