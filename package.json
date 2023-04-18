@@ -1,6 +1,6 @@
 {
   "name": "prisma-import-tools",
-  "version": "4.12.0",
+  "version": "4.13.0",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "5.53.0",
     "@typescript-eslint/parser": "5.53.0",
