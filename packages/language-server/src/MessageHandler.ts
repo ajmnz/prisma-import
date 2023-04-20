@@ -321,7 +321,7 @@ export function handleDocumentFormatting(
         const importedBlock = schemaMatch.blocks.find((b) => b.name === matchedBlock.name)
 
         if (importedBlock) {
-          const originalBlock = schemaMatch.document.getText(importedBlock.range) + '\n'
+          const originalBlock = schemaMatch.document.getText(importedBlock.range).replace(/\r/g, '') + '\n'
           const replacementBlock = format(
             formattedDocument.getText(matchedBlock.range).replace(/VirtualReplaced/g, ''),
             params,
@@ -333,7 +333,6 @@ export function handleDocumentFormatting(
               {
                 originalBlock,
                 replacementBlock,
-                originalV2: formattedDocument.getText(matchedBlock.range).replace(/VirtualReplaced/g, ''),
                 equal: originalBlock === replacementBlock,
               },
               null,
