@@ -5,10 +5,15 @@ import { pathToFileURL } from 'url'
 
 export const CURSOR_CHARACTER = '|'
 
+export function getFileUrl(testFilePath: string) {
+  const absolutePath = path.join(__dirname, '../../../test/fixtures', testFilePath)
+  return pathToFileURL(absolutePath).toString()
+}
+
 export function getTextDocument(testFilePath: string, toFileUrl = false): TextDocument {
   const absolutePath = path.join(__dirname, '../../../test/fixtures', testFilePath)
   const content: string = fs.readFileSync(absolutePath, 'utf8')
-  return TextDocument.create(toFileUrl ? pathToFileURL(absolutePath).toString() : testFilePath, 'prisma', 1, content)
+  return TextDocument.create(toFileUrl ? getFileUrl(testFilePath) : testFilePath, 'prisma', 1, content)
 }
 
 export const findCursorPosition = (input: string): Position => {
