@@ -58,14 +58,22 @@ export const getVirtualSchema = (document: TextDocument) => {
   const virtualSchema = ['\n// begin_virtual_schema\n']
   const visitedBlocks: string[] = [...documentSchemaBlockNames]
 
-  // Find datasource
+  // Find datasource and client generator
 
   const datasourceSchema = getAllSchemas().find((s) => s.blocks.some((b) => b.type === 'datasource'))
-  if (datasourceSchema && datasourceSchema.path !== documentSchema.path) {
-    const dataSourceBlock = datasourceSchema?.blocks.find((b) => b.type === 'datasource')
-    if (dataSourceBlock) {
-      virtualSchema.push(datasourceSchema.document.getText(dataSourceBlock.range))
-    }
+  const clientGeneratorSchema = getAllSchemas().find((s) =>
+    s.blocks.some((b) => b.type === 'generator' && b.name === 'client'),
+  )
+
+  const datasourceBlock = datasourceSchema?.blocks.find((b) => b.type === 'datasource')
+  const clientGeneratorBlock = clientGeneratorSchema?.blocks.find((b) => b.type === 'generator' && b.name === 'client')
+
+  if (datasourceBlock && datasourceSchema && datasourceSchema.path !== documentSchema.path) {
+    virtualSchema.push(datasourceSchema.document.getText(datasourceBlock.range))
+  }
+
+  if (clientGeneratorBlock && clientGeneratorSchema && clientGeneratorSchema.path !== documentSchema.path) {
+    virtualSchema.push(clientGeneratorSchema.document.getText(clientGeneratorBlock.range))
   }
 
   /**
