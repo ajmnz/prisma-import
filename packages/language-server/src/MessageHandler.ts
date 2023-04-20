@@ -329,7 +329,16 @@ export function handleDocumentFormatting(
           )
 
           console.log(
-            JSON.stringify({ originalBlock, replacementBlock, equal: originalBlock === replacementBlock }, null, 2),
+            JSON.stringify(
+              {
+                originalBlock,
+                replacementBlock,
+                originalV2: formattedDocument.getText(matchedBlock.range).replace(/VirtualReplaced/g, ''),
+                equal: originalBlock === replacementBlock,
+              },
+              null,
+              2,
+            ),
           )
 
           if (originalBlock !== replacementBlock) {
