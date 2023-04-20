@@ -333,6 +333,10 @@ export function handleDocumentFormatting(
           }
         }
       }
+
+      if (!edits[schemaMatch.document.uri].length) {
+        delete edits[schemaMatch.document.uri]
+      }
     }
   }
 
