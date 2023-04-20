@@ -321,17 +321,33 @@ export function handleDocumentFormatting(
         const importedBlock = schemaMatch.blocks.find((b) => b.name === matchedBlock.name)
 
         if (importedBlock) {
-          const originalBlock = schemaMatch.document.getText(importedBlock.range) + '\n'
+          const originalBlock = schemaMatch.document.getText(importedBlock.range).replace(/\r/g, '') + '\n'
           const replacementBlock = format(
             formattedDocument.getText(matchedBlock.range).replace(/VirtualReplaced/g, ''),
             params,
             onError,
           )
 
+          console.log(
+            JSON.stringify(
+              {
+                originalBlock,
+                replacementBlock,
+                equal: originalBlock === replacementBlock,
+              },
+              null,
+              2,
+            ),
+          )
+
           if (originalBlock !== replacementBlock) {
             edits[schemaMatch.document.uri].push(TextEdit.replace(importedBlock.range, replacementBlock))
           }
         }
+      }
+
+      if (!edits[schemaMatch.document.uri].length) {
+        delete edits[schemaMatch.document.uri]
       }
     }
   }

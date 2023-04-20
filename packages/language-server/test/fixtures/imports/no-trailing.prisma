@@ -1,0 +1,8 @@
+import { CompanyDetails } from "./many-trailing"
+
+model Company {
+  id      String          @id
+  name    String
+  slug    String          @unique
+  details CompanyDetails?
+}

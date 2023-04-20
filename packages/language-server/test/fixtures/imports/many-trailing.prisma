@@ -1,0 +1,7 @@
+import { Company } from "./no-trailing"
+
+model CompanyDetails {
+  companyId String  @id
+  shortBio  String
+  company   Company @relation(fields: [companyId], references: [id])
+}
