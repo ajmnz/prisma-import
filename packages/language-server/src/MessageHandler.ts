@@ -328,18 +328,6 @@ export function handleDocumentFormatting(
             onError,
           )
 
-          console.log(
-            JSON.stringify(
-              {
-                originalBlock,
-                replacementBlock,
-                equal: originalBlock === replacementBlock,
-              },
-              null,
-              2,
-            ),
-          )
-
           if (originalBlock !== replacementBlock) {
             edits[schemaMatch.document.uri].push(TextEdit.replace(importedBlock.range, replacementBlock))
           }
