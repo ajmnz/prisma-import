@@ -209,7 +209,7 @@ const plugin: PrismaVSCodePlugin = {
           range: Range,
           context: CodeActionContext,
           token: CancellationToken,
-          _: ProvideCodeActionsSignature, // eslint-disable-line @typescript-eslint/no-unused-vars
+          _: ProvideCodeActionsSignature,
         ) {
           const params: CodeActionParams & { schemas: string[] } = {
             textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
@@ -244,7 +244,7 @@ const plugin: PrismaVSCodePlugin = {
               }
               return result
             },
-            (_) => undefined, // eslint-disable-line @typescript-eslint/no-unused-vars
+            (_) => undefined,
           )
         },
       } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -293,7 +293,7 @@ const plugin: PrismaVSCodePlugin = {
             }
           }
         }
-      }, // eslint-disable-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
+      },
       null,
       context.subscriptions,
     )

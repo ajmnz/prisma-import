@@ -6,7 +6,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { getAllSchemas } from './imports'
 
-export type BlockType = 'generator' | 'datasource' | 'model' | 'type' | 'enum' | 'import'
+export type BlockType = 'generator' | 'datasource' | 'model' | 'type' | 'enum' | 'import' | 'view'
 export type ImportedBlock = { name: string; range: Range }
 export class Block {
   type: BlockType
@@ -37,14 +37,14 @@ export function fullDocumentRange(document: TextDocument): Range {
   const lastLineId = document.lineCount - 1
   return {
     start: { line: 0, character: 0 },
-    end: { line: lastLineId, character: Number.MAX_SAFE_INTEGER },
+    end: { line: lastLineId, character: MAX_SAFE_VALUE_i32 },
   }
 }
 
 export function getCurrentLine(document: TextDocument, line: number): string {
   return document.getText({
     start: { line: line, character: 0 },
-    end: { line: line, character: Number.MAX_SAFE_INTEGER },
+    end: { line: line, character: MAX_SAFE_VALUE_i32 },
   })
 }
 
@@ -134,7 +134,7 @@ export function* getBlocks(lines: string[]): Generator<Block, void, void> {
   let blockType = ''
   let blockNameRange: Range | undefined
   let blockStart: Position = Position.create(0, 0)
-  const allowedBlockIdentifiers: BlockType[] = ['model', 'type', 'enum', 'datasource', 'generator']
+  const allowedBlockIdentifiers: BlockType[] = ['model', 'type', 'enum', 'datasource', 'generator', 'view']
 
   for (const [key, item] of lines.entries()) {
     if (item.startsWith('import')) {
@@ -201,14 +201,15 @@ export function getBlockAtPosition(line: number, lines: string[], includeImports
   return
 }
 
-export function getModelOrTypeOrEnumBlock(blockName: string, lines: string[]): Block | void {
+export function getModelOrTypeOrEnumOrViewBlock(blockName: string, lines: string[]): Block | void {
   // get start position of block
   const results: number[] = lines
     .map((line, index) => {
       if (
         (line.includes('model') && line.includes(blockName)) ||
         (line.includes('type') && line.includes(blockName)) ||
-        (line.includes('enum') && line.includes(blockName))
+        (line.includes('enum') && line.includes(blockName)) ||
+        (line.includes('view') && line.includes(blockName))
       ) {
         return index
       }
@@ -290,8 +291,13 @@ export function getValuesInsideSquareBrackets(line: string): string[] {
   return result
 }
 
-export function declaredNativeTypes(document: TextDocument): boolean {
-  const nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document)
+export function declaredNativeTypes(document: TextDocument, onError?: (errorMessage: string) => void): boolean {
+  const nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document, (errorMessage: string) => {
+    if (onError) {
+      onError(errorMessage)
+    }
+  })
+
   if (nativeTypes.length === 0) {
     return false
   }
@@ -310,7 +316,7 @@ export function extractBlockName(line: string): string {
 export function getAllRelationNames(lines: string[]): string[] {
   const modelNames: string[] = []
   for (const line of lines) {
-    const modelOrEnumRegex = /^(model|enum)\s+(\w+)\s+{/gm
+    const modelOrEnumRegex = /^(model|enum|view)\s+(\w+)\s+{/gm
     const result = modelOrEnumRegex.exec(line)
     if (result && result[2]) {
       modelNames.push(result[2])
@@ -576,6 +582,7 @@ export function getFieldTypesFromCurrentBlock(
       if (fieldType !== undefined) {
         const existingFieldType = fieldTypes.get(fieldType)
         if (!existingFieldType) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const fieldName = getFieldNameFromLine(line)!
           fieldTypes.set(fieldType, { lineIndexes: [lineIndex], fieldName })
           fieldTypeNames[fieldName] = fieldType
@@ -607,7 +614,12 @@ export function getCompositeTypeFieldsRecursively(
     fieldTypeNames: Record<string, string>
   },
 ): string[] {
-  const compositeTypeFieldName = compositeTypeFieldNames.shift()!
+  const compositeTypeFieldName = compositeTypeFieldNames.shift()
+
+  if (!compositeTypeFieldName) {
+    return []
+  }
+
   const fieldTypeNames = fieldTypesFromBlock.fieldTypeNames
   const fieldTypeName = fieldTypeNames[compositeTypeFieldName]
 
@@ -615,7 +627,7 @@ export function getCompositeTypeFieldsRecursively(
     return []
   }
 
-  const typeBlock = getModelOrTypeOrEnumBlock(fieldTypeName, lines)
+  const typeBlock = getModelOrTypeOrEnumOrViewBlock(fieldTypeName, lines)
   if (!typeBlock || typeBlock.type !== 'type') {
     return []
   }
@@ -639,3 +651,5 @@ export const relativeToAbsolutePath = (document: TextDocument, relativePath: str
 export const absoluteToRelativePath = (document: TextDocument, absolutePath: string) => {
   return path.relative(path.dirname(fileURLToPath(document.uri)), absolutePath)
 }
+
+export const MAX_SAFE_VALUE_i32 = 2147483647

@@ -110,8 +110,7 @@ export function startServer(options?: LSOptions): void {
   // Cache the settings of all open documents
   const documentSettings: Map<string, Thenable<LSSettings>> = new Map<string, Thenable<LSSettings>>()
 
-  // eslint-disable-line @typescript-eslint/no-unused-vars
-  connection.onDidChangeConfiguration(() => {
+  connection.onDidChangeConfiguration((_change) => {
     connection.console.info('Configuration changed.')
     if (hasConfigurationCapability) {
       // Reset all cached document settings
@@ -153,10 +152,12 @@ export function startServer(options?: LSOptions): void {
     documents.all().forEach(validateTextDocument)
   })
 
+  function showErrorToast(errorMessage: string) {
+    connection.window.showErrorMessage(errorMessage)
+  }
+
   function validateTextDocument(textDocument: TextDocument) {
-    const diagnostics: Diagnostic[] = MessageHandler.handleDiagnosticsRequest(textDocument, (errorMessage: string) => {
-      connection.window.showErrorMessage(errorMessage)
-    })
+    const diagnostics: Diagnostic[] = MessageHandler.handleDiagnosticsRequest(textDocument, showErrorToast)
 
     void connection.sendDiagnostics({ uri: textDocument.uri, diagnostics })
   }
@@ -179,7 +180,7 @@ export function startServer(options?: LSOptions): void {
   connection.onCompletion((params: CompletionParams) => {
     const doc = getDocument(params.textDocument.uri)
     if (doc) {
-      return MessageHandler.handleCompletionRequest(params, doc)
+      return MessageHandler.handleCompletionRequest(params, doc, showErrorToast)
     }
   })
 
@@ -213,9 +214,7 @@ export function startServer(options?: LSOptions): void {
         async (edit: WorkspaceEdit): Promise<void> => {
           await connection.workspace.applyEdit(edit)
         },
-        (errorMessage: string) => {
-          connection.window.showErrorMessage(errorMessage)
-        },
+        showErrorToast,
       )
     }
   })
@@ -223,7 +222,7 @@ export function startServer(options?: LSOptions): void {
   connection.onCodeAction((params: CodeActionParams) => {
     const doc = getDocument(params.textDocument.uri)
     if (doc) {
-      return MessageHandler.handleCodeActions(params, doc)
+      return MessageHandler.handleCodeActions(params, doc, showErrorToast)
     }
   })
 

@@ -30,7 +30,16 @@ module.exports = {
         'plugin:@typescript-eslint/eslint-recommended',
         'plugin:@typescript-eslint/recommended-requiring-type-checking',
       ],
-      rules: {},
+      rules: {
+        '@typescript-eslint/no-unused-vars': [
+          'warn', // or "error"
+          {
+            argsIgnorePattern: '^_',
+            varsIgnorePattern: '^_',
+            caughtErrorsIgnorePattern: '^_',
+          },
+        ],
+      },
     },
   ],
 }

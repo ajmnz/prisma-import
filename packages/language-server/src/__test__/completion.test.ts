@@ -1,14 +1,9 @@
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { handleCompletionRequest } from '../MessageHandler'
-import {
-  CompletionList,
-  CompletionParams,
-  Position,
-  CompletionItemKind,
-  CompletionTriggerKind,
-} from 'vscode-languageserver'
+import { CompletionList, CompletionParams, CompletionItemKind, CompletionTriggerKind } from 'vscode-languageserver'
 import assert from 'assert'
 import dedent from 'ts-dedent'
+import { CURSOR_CHARACTER, findCursorPosition } from './helper'
 
 /* eslint-disable @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-misused-promises */
 
@@ -50,8 +45,6 @@ function assertCompletion({
   schema: string
   expected: CompletionList
 }): void {
-  const CURSOR_CHARACTER = '|'
-
   // Remove indentation
   schema = dedent(schema)
 
@@ -60,27 +53,6 @@ function assertCompletion({
     ${baseSchema(provider, previewFeatures)}
     ${schema}
     `
-  }
-
-  const findCursorPosition = (input: string): Position => {
-    const lines = input.split('\n')
-
-    let foundCursorCharacter = -1
-    const foundLinePosition = lines.findIndex((line) => {
-      const cursorPosition = line.indexOf(CURSOR_CHARACTER)
-      if (cursorPosition !== -1) {
-        foundCursorCharacter = cursorPosition
-        return true
-      }
-    })
-
-    if (foundLinePosition >= 0 && foundCursorCharacter >= 0) {
-      return { line: foundLinePosition, character: foundCursorCharacter }
-    }
-
-    throw new Error(
-      'Each test must include the `|` pipe character to signal where the cursor should be when executing the test.',
-    )
   }
 
   const position = findCursorPosition(schema)
@@ -210,10 +182,56 @@ suite('Completions', function () {
         },
       })
     })
+
+    test('Diagnoses block type suggestions with mongodb as provider', () => {
+      assertCompletion({
+        schema: /* Prisma */ `
+        datasource db {
+          provider = "mongodb"
+        }
+        |
+        `,
+        expected: {
+          isIncomplete: false,
+          items: [
+            { label: 'datasource', kind: CompletionItemKind.Class },
+            { label: 'generator', kind: CompletionItemKind.Class },
+            { label: 'model', kind: CompletionItemKind.Class },
+            { label: 'import', kind: CompletionItemKind.Class },
+            { label: 'enum', kind: CompletionItemKind.Class },
+            { label: 'type', kind: CompletionItemKind.Class },
+          ],
+        },
+      })
+    })
+
+    test('Diagnoses block type suggestions for view preview', () => {
+      assertCompletion({
+        schema: /* Prisma */ `
+        generator client {
+          provider        = "prisma-client-js"
+          previewFeatures = ["views"]
+        }
+        |
+        `,
+        expected: {
+          isIncomplete: false,
+          items: [
+            { label: 'datasource', kind: CompletionItemKind.Class },
+            { label: 'generator', kind: CompletionItemKind.Class },
+            { label: 'model', kind: CompletionItemKind.Class },
+            { label: 'import', kind: CompletionItemKind.Class },
+            { label: 'enum', kind: CompletionItemKind.Class },
+            { label: 'view', kind: CompletionItemKind.Class },
+          ],
+        },
+      })
+    })
   })
 
   suite('DATABASE BLOCK', () => {
     const fieldUrl = { label: 'url', kind: CompletionItemKind.Field }
+    const fieldDirectUrl = { label: 'directUrl', kind: CompletionItemKind.Field }
     const fieldShadowDatabaseUrl = {
       label: 'shadowDatabaseUrl',
       kind: CompletionItemKind.Field,
@@ -224,6 +242,11 @@ suite('Completions', function () {
     }
     const fieldPostgresqlExtensions = {
       label: 'extensions',
+      kind: CompletionItemKind.Field,
+    }
+
+    const fieldSchemas = {
+      label: 'schemas',
       kind: CompletionItemKind.Field,
     }
 
@@ -264,10 +287,7 @@ suite('Completions', function () {
       label: '""',
       kind: CompletionItemKind.Property,
     }
-    const envArgument = {
-      label: 'DATABASE_URL',
-      kind: CompletionItemKind.Constant,
-    }
+
     const env = { label: 'env()', kind: CompletionItemKind.Property }
 
     test('Diagnoses datasource field suggestions in empty block', () => {
@@ -278,7 +298,7 @@ suite('Completions', function () {
         }`,
         expected: {
           isIncomplete: false,
-          items: [fieldProvider, fieldUrl, fieldShadowDatabaseUrl, fieldRelationMode],
+          items: [fieldProvider, fieldUrl, fieldShadowDatabaseUrl, fieldDirectUrl, fieldRelationMode],
         },
       })
     })
@@ -292,7 +312,7 @@ suite('Completions', function () {
         }`,
         expected: {
           isIncomplete: false,
-          items: [fieldUrl, fieldShadowDatabaseUrl, fieldRelationMode],
+          items: [fieldProvider, fieldUrl, fieldShadowDatabaseUrl, fieldDirectUrl, fieldRelationMode],
         },
       })
       assertCompletion({
@@ -303,20 +323,20 @@ suite('Completions', function () {
         }`,
         expected: {
           isIncomplete: false,
-          items: [fieldProvider, fieldShadowDatabaseUrl, fieldRelationMode],
+          items: [fieldProvider, fieldUrl, fieldShadowDatabaseUrl, fieldDirectUrl, fieldRelationMode],
         },
       })
     })
 
-    test('Diagnoses url argument suggestions for datasource block', () => {
+    test('url = env("|")', () => {
       assertCompletion({
         schema: /* Prisma */ `
         datasource db {
             url = |
         }`,
         expected: {
-          isIncomplete: true,
-          items: [quotationMarks, env],
+          isIncomplete: false,
+          items: [env, quotationMarks],
         },
       })
       assertCompletion({
@@ -326,26 +346,109 @@ suite('Completions', function () {
         }`,
         expected: {
           isIncomplete: false,
-          items: [envArgument],
+          items: [
+            {
+              label: 'DATABASE_URL',
+              kind: CompletionItemKind.Constant,
+            },
+          ],
         },
       })
     })
 
-    test('Diagnoses field extension availability', () => {
+    test('shadowDatabaseUrl = env("|")', () => {
+      assertCompletion({
+        schema: /* Prisma */ `
+        datasource db {
+            url = |
+        }`,
+        expected: {
+          isIncomplete: false,
+          items: [env, quotationMarks],
+        },
+      })
+      assertCompletion({
+        schema: /* Prisma */ `
+        datasource db {
+          shadowDatabaseUrl = env("|")
+        }`,
+        expected: {
+          isIncomplete: false,
+          items: [
+            {
+              label: 'SHADOW_DATABASE_URL',
+              kind: CompletionItemKind.Constant,
+            },
+          ],
+        },
+      })
+    })
+
+    test('directUrl = env("|")', () => {
+      assertCompletion({
+        schema: /* Prisma */ `
+        datasource db {
+            url = |
+        }`,
+        expected: {
+          isIncomplete: false,
+          items: [env, quotationMarks],
+        },
+      })
+      assertCompletion({
+        schema: /* Prisma */ `
+        datasource db {
+            directUrl = env("|")
+        }`,
+        expected: {
+          isIncomplete: false,
+          items: [
+            {
+              label: 'DIRECT_URL',
+              kind: CompletionItemKind.Constant,
+            },
+          ],
+        },
+      })
+    })
+
+    test('Diagnoses field extensions availability', () => {
       assertCompletion({
         schema: /* Prisma */ `
           generator client {
+            provider = "prisma-client-js"
             previewFeatures = ["postgresqlExtensions"]
           }
 
           datasource db {
             provider = "postgresql"
+            url = env("DATABASE_URL")
             |
           }
         `,
         expected: {
           isIncomplete: false,
-          items: [fieldUrl, fieldShadowDatabaseUrl, fieldRelationMode, fieldPostgresqlExtensions],
+          items: [fieldShadowDatabaseUrl, fieldDirectUrl, fieldRelationMode, fieldPostgresqlExtensions],
+        },
+      })
+    })
+
+    test('Diagnoses field schemas', () => {
+      assertCompletion({
+        schema: /* Prisma */ `
+          generator client {
+            provider = "prisma-client-js"
+            previewFeatures = ["multiSchema"]
+          }
+          datasource db {
+            provider = "cockroachdb"
+            url = env("DATABASE_URL")
+            |
+          }
+        `,
+        expected: {
+          isIncomplete: false,
+          items: [fieldShadowDatabaseUrl, fieldDirectUrl, fieldRelationMode, fieldSchemas],
         },
       })
     })
@@ -383,7 +486,7 @@ suite('Completions', function () {
           relationMode = "|"
         }`,
         expected: {
-          isIncomplete: true,
+          isIncomplete: false,
           items: [relationModeForeignKeys, relationModePrisma],
         },
       })
@@ -395,7 +498,7 @@ suite('Completions', function () {
           relationMode = |
         }`,
         expected: {
-          isIncomplete: true,
+          isIncomplete: false,
           items: [relationModeForeignKeysWithQuotes, relationModePrismaWithQuotes],
         },
       })
@@ -426,7 +529,7 @@ suite('Completions', function () {
         }`,
         expected: {
           isIncomplete: false,
-          items: [fieldProvider, fieldOutput, fieldBinaryTargets, fieldPreviewFeatures, fieldEngineType],
+          items: [fieldProvider, fieldPreviewFeatures, fieldOutput, fieldEngineType, fieldBinaryTargets],
         },
       })
     })
@@ -440,7 +543,7 @@ suite('Completions', function () {
           }`,
         expected: {
           isIncomplete: false,
-          items: [fieldOutput, fieldBinaryTargets, fieldPreviewFeatures, fieldEngineType],
+          items: [fieldPreviewFeatures, fieldOutput, fieldEngineType, fieldBinaryTargets],
         },
       })
       assertCompletion({
@@ -451,7 +554,7 @@ suite('Completions', function () {
           }`,
         expected: {
           isIncomplete: false,
-          items: [fieldProvider, fieldBinaryTargets, fieldPreviewFeatures, fieldEngineType],
+          items: [fieldProvider, fieldPreviewFeatures, fieldEngineType, fieldBinaryTargets],
         },
       })
     })
@@ -525,8 +628,20 @@ suite('Completions', function () {
       label: '@@ignore',
       kind: CompletionItemKind.Property,
     }
+    const blockAttributeSchema = {
+      label: '@@schema',
+      kind: CompletionItemKind.Property,
+    }
     const typeProperty = {
       label: 'type',
+      kind: CompletionItemKind.Property,
+    }
+    const namespaceOne = {
+      label: 'one',
+      kind: CompletionItemKind.Property,
+    }
+    const namespaceTwo = {
+      label: 'two',
       kind: CompletionItemKind.Property,
     }
 
@@ -601,6 +716,30 @@ suite('Completions', function () {
           expected: {
             isIncomplete: false,
             items: [blockAttributeMap, blockAttributeUnique, blockAttributeIndex, blockAttributeIgnore],
+          },
+        })
+      })
+
+      test('View', () => {
+        assertCompletion({
+          schema: /* Prisma */ `
+          view User {
+            firstName String
+            lastName String
+            email String @unique
+            isAdmin Boolean @default(false)
+            |
+          }
+          `,
+          expected: {
+            isIncomplete: false,
+            items: [
+              blockAttributeMap,
+              blockAttributeId,
+              blockAttributeUnique,
+              blockAttributeIndex,
+              blockAttributeIgnore,
+            ],
           },
         })
       })
@@ -1470,9 +1609,111 @@ suite('Completions', function () {
         })
       })
     })
+
+    suite('@@schema()', () => {
+      test('@@schema - postgres', () => {
+        assertCompletion({
+          provider: 'postgresql',
+          previewFeatures: ['multiSchema'],
+          schema: /* prisma */ `
+            model Schema {
+              id Int @id
+              |
+            }
+          `,
+          expected: {
+            isIncomplete: false,
+            items: [
+              blockAttributeMap,
+              blockAttributeUnique,
+              blockAttributeIndex,
+              blockAttributeIgnore,
+              blockAttributeSchema,
+            ],
+          },
+        })
+      })
+      test('@@schema(|) - postgres', () => {
+        assertCompletion({
+          schema: /* prisma */ `
+            generator client {
+              provider = "prisma-client-js"
+              previewFeatures = ["multiSchema"]
+            }
+            datasource db {
+              provider = "postgresql"
+              url = env("DATABASE_URL")
+              schemas = ["one", "two"]
+            }
+            model Schema {
+              id Int @id
+              @@schema(|)
+            }
+          `,
+          expected: {
+            isIncomplete: false,
+            items: [namespaceOne, namespaceTwo],
+          },
+        })
+      })
+    })
   })
 
   suite('TYPES', () => {
+    suite('Views', () => {
+      test('Field Types', () => {
+        assertCompletion({
+          schema: /* Prisma */ `
+          view A {
+            name |
+          }
+          `,
+          expected: {
+            isIncomplete: true,
+            items: [
+              { label: 'String', kind: CompletionItemKind.TypeParameter },
+              { label: 'Boolean', kind: CompletionItemKind.TypeParameter },
+              { label: 'Int', kind: CompletionItemKind.TypeParameter },
+              { label: 'Float', kind: CompletionItemKind.TypeParameter },
+              { label: 'DateTime', kind: CompletionItemKind.TypeParameter },
+              { label: 'Json', kind: CompletionItemKind.TypeParameter },
+              { label: 'Bytes', kind: CompletionItemKind.TypeParameter },
+              { label: 'Decimal', kind: CompletionItemKind.TypeParameter },
+              { label: 'BigInt', kind: CompletionItemKind.TypeParameter },
+              {
+                label: 'Unsupported',
+                kind: CompletionItemKind.TypeParameter,
+              },
+              { label: 'A', kind: CompletionItemKind.Reference },
+            ],
+          },
+        })
+      })
+
+      test('Field Attributes', () => {
+        assertCompletion({
+          provider: 'postgresql',
+          schema: /* Prisma */ `
+          view A {
+            name String |
+          }
+          `,
+          expected: {
+            isIncomplete: false,
+            items: [
+              { label: '@db', kind: CompletionItemKind.Property },
+              { label: '@id', kind: CompletionItemKind.Property },
+              { label: '@unique', kind: CompletionItemKind.Property },
+              { label: '@map', kind: CompletionItemKind.Property },
+              { label: '@default', kind: CompletionItemKind.Property },
+              { label: '@relation', kind: CompletionItemKind.Property },
+              { label: '@ignore', kind: CompletionItemKind.Property },
+            ],
+          },
+        })
+      })
+    })
+
     test('Diagnoses type suggestions in model - No datasource', () => {
       assertCompletion({
         schema: /* Prisma */ `
@@ -1537,7 +1778,11 @@ suite('Completions', function () {
             @@index([firstName, ])
             @@fulltext()
             @@fulltext([])
-        }`,
+        }
+        view FifthUser {
+            firstName String @unique
+        }
+        `,
         expected: {
           isIncomplete: true,
           items: [
@@ -1566,6 +1811,7 @@ suite('Completions', function () {
             { label: 'DateTest', kind: CompletionItemKind.Reference },
             { label: 'UserType', kind: CompletionItemKind.Reference },
             { label: 'ForthUser', kind: CompletionItemKind.Reference },
+            { label: 'FifthUser', kind: CompletionItemKind.Reference },
           ],
         },
       })
@@ -1800,6 +2046,28 @@ suite('Completions', function () {
           expected: {
             isIncomplete: false,
             items: [{ label: 'Int8', kind: CompletionItemKind.TypeParameter }],
+          },
+        })
+      })
+      test('View - String', () => {
+        assertCompletion({
+          provider: 'cockroachdb',
+          schema: /* Prisma */ `
+            view Post {
+              something String @db.|
+            }
+          `,
+          expected: {
+            isIncomplete: false,
+            items: [
+              { label: 'Bit()', kind: CompletionItemKind.TypeParameter },
+              { label: 'Char()', kind: CompletionItemKind.TypeParameter },
+              { label: 'Inet', kind: CompletionItemKind.TypeParameter },
+              { label: 'CatalogSingleChar', kind: CompletionItemKind.TypeParameter },
+              { label: 'String()', kind: CompletionItemKind.TypeParameter },
+              { label: 'Uuid', kind: CompletionItemKind.TypeParameter },
+              { label: 'VarBit()', kind: CompletionItemKind.TypeParameter },
+            ],
           },
         })
       })

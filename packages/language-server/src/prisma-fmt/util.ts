@@ -1,3 +1,5 @@
+import { getWasmError, isWasmPanic, WasmPanic } from '../panic'
+
 /**
  * Imports
  */
@@ -29,4 +31,40 @@ export function getEnginesVersion(): string {
  */
 export function getCliVersion(): string {
   return packageJson.prisma.cliVersion
+}
+
+export function handleWasmError(e: Error, cmd: string, onError?: (errorMessage: string) => void) {
+  const getErrorMessage = () => {
+    if (isWasmPanic(e)) {
+      const { message } = getWasmError(e)
+      const msg = `prisma-fmt errored when invoking ${cmd}. It resulted in a Wasm panic.\n${message}`
+
+      return { message: msg, isPanic: true }
+    }
+
+    const msg = `prisma-fmt errored when invoking ${cmd}.\n${e.message}`
+    return { message: msg, isPanic: false }
+  }
+
+  const { message, isPanic } = getErrorMessage()
+
+  if (isPanic) {
+    console.error(message)
+  } else {
+    console.warn(message)
+  }
+
+  if (onError) {
+    onError(
+      "prisma-fmt errored. To get a more detailed output please see Prisma Language Server output. You can do this by going to View, then Output from the toolbar, and then select 'Prisma Language Server' in the drop-down menu.",
+    )
+  }
+}
+
+export function handleFormatPanic(tryCb: () => void) {
+  try {
+    return tryCb()
+  } catch (e: unknown) {
+    throw getWasmError(e as WasmPanic)
+  }
 }

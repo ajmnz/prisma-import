@@ -1,4 +1,5 @@
-import prismaFmt from '@prisma/prisma-fmt-wasm'
+import { prismaFmt } from '../wasm'
+import { handleFormatPanic, handleWasmError } from './util'
 
 export interface LinterError {
   start: number
@@ -10,17 +11,19 @@ export interface LinterError {
 export default function lint(text: string, onError?: (errorMessage: string) => void): LinterError[] {
   console.log('running lint() from prisma-fmt')
   try {
-    const result = prismaFmt.lint(text)
-    return JSON.parse(result) // eslint-disable-line @typescript-eslint/no-unsafe-return
-  } catch (errors) {
-    const errorMessage = "prisma-fmt error'd during linting.\n"
-
-    if (onError) {
-      onError(errorMessage + errors) // eslint-disable-line @typescript-eslint/restrict-plus-operands
+    if (process.env.FORCE_PANIC_PRISMA_FMT) {
+      handleFormatPanic(() => {
+        console.debug('Triggering a Rust panic...')
+        prismaFmt.debug_panic()
+      })
     }
 
-    console.error(errorMessage)
-    console.error(errors)
+    const result = prismaFmt.lint(text)
+    return JSON.parse(result) as LinterError[]
+  } catch (e) {
+    const err = e as Error
+
+    handleWasmError(err, 'lint', onError)
     return []
   }
 }
