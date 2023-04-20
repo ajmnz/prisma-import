@@ -2,6 +2,7 @@ import * as assert from 'assert'
 import { handleDocumentFormatting } from '../MessageHandler'
 import { getFileUrl, getTextDocument } from './helper'
 import { setSchemasAndBlocksFromURIs } from '../imports'
+import { WorkspaceEdit } from 'vscode-languageserver'
 
 suite('Imports', () => {
   suite('Formatting', () => {
@@ -18,13 +19,17 @@ suite('Imports', () => {
       )
 
       let noTrailingFlag = false
+      let noTrailingEdit: WorkspaceEdit | null = null
+
       let manyTrailingFlag = false
+      let manyTrailingEdit: WorkspaceEdit | null = null
 
       const noTrailingFormatted = handleDocumentFormatting(
         { textDocument: { uri: getFileUrl(noTrailingFixture) }, options: { tabSize: 2, insertSpaces: true } },
         noTrailingDoc,
-        () => {
+        (edit) => {
           noTrailingFlag = true
+          noTrailingEdit = edit
           return Promise.resolve()
         },
       )
@@ -32,8 +37,9 @@ suite('Imports', () => {
       const manyTrailingFormatted = handleDocumentFormatting(
         { textDocument: { uri: getFileUrl(manyTrailingFixture) }, options: { tabSize: 2, insertSpaces: true } },
         manyTrailingDoc,
-        () => {
+        (edit) => {
           manyTrailingFlag = true
+          manyTrailingEdit = edit
           return Promise.resolve()
         },
       )
@@ -47,6 +53,14 @@ suite('Imports', () => {
         manyTrailingFormatted[0].newText,
         'import { Company } from "./no-trailing"\n\nmodel CompanyDetails {\n  companyId String  @id\n  shortBio  String\n  company   Company @relation(fields: [companyId], references: [id])\n}\n',
       )
+
+      if (noTrailingEdit) {
+        console.log(JSON.stringify({ noTrailingEdit: noTrailingEdit }, null, 2))
+      }
+
+      if (manyTrailingEdit) {
+        console.log(JSON.stringify({ manyTrailingEdit: manyTrailingEdit }, null, 2))
+      }
 
       assert.ok(!noTrailingFlag)
       assert.ok(!manyTrailingFlag)
