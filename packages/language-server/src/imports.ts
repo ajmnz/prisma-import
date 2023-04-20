@@ -13,6 +13,8 @@ import {
 } from './util'
 import { getVirtualSchema } from './virtual-schema'
 
+export const IMPORTABLE_BLOCKS = ['enum', 'type', 'model', 'view']
+
 export const getImportStatementLineIndexes = (statement: string, trimmedLineArray: string[]) => {
   return trimmedLineArray
     .map((l, i) => [l, i] as const)
@@ -211,7 +213,7 @@ export const setSchemasAndBlocksFromURIs = (uris: URI[], documents: TextDocument
     const lines = convertDocumentTextToTrimmedLineArray(document)
     const blocks = Array.from(getBlocks(lines))
 
-    allBlocks.push(...blocks.filter((b) => ['enum', 'model', 'type'].includes(b.type)).map((b) => b.name))
+    allBlocks.push(...blocks.filter((b) => IMPORTABLE_BLOCKS.includes(b.type)).map((b) => b.name))
 
     const importBlocks = getImportBlocks(lines)
     blocks.push(...importBlocks)

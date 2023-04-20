@@ -17,7 +17,11 @@ type JSONSimpleCompletionItems = {
   label: string
   insertText?: string // optional text to use as completion instead of label
   documentation?: string
+  fullSignature?: string // custom signature to show
 }[]
+
+// Docs about CompletionItem
+// https://code.visualstudio.com/api/references/vscode-api#CompletionItem
 
 /**
  * Converts a json object containing labels and documentations to CompletionItems.
@@ -27,14 +31,28 @@ function convertToCompletionItems(
   itemKind: CompletionItemKind,
 ): CompletionItem[] {
   const result: CompletionItem[] = []
+
   for (const item of completionItems) {
+    let documentationString: string | undefined = undefined
+
+    if (item.documentation) {
+      // If a "fullSignature" is provided, we want to show it in the completion item
+      const documentationWithSignature =
+        item.fullSignature && item.documentation
+          ? ['```prisma', item.fullSignature, '```', '___', item.documentation].join('\n')
+          : undefined
+
+      // If not we only show the documentation
+      documentationString = documentationWithSignature ? documentationWithSignature : item.documentation
+    }
+
     result.push({
       label: item.label,
       kind: itemKind,
       insertText: item.insertText,
       insertTextFormat: item.insertText ? InsertTextFormat.Snippet : InsertTextFormat.PlainText,
       insertTextMode: item.insertText ? InsertTextMode.adjustIndentation : undefined,
-      documentation: item.documentation ? { kind: MarkupKind.Markdown, value: item.documentation } : undefined,
+      documentation: documentationString ? { kind: MarkupKind.Markdown, value: documentationString } : undefined,
     })
   }
   return result
@@ -55,11 +73,11 @@ function convertAttributesToCompletionItems(
   completionItems: JSONFullCompletionItems,
   itemKind: CompletionItemKind,
 ): CompletionItem[] {
-  // https://code.visualstudio.com/api/references/vscode-api#CompletionItem
   const result: CompletionItem[] = []
 
   for (const item of completionItems) {
     const docComment = ['```prisma', item.fullSignature, '```', '___', item.documentation]
+
     for (const param of item.params) {
       docComment.push('', '_@param_ ' + param.label + ' ' + param.documentation)
     }
@@ -75,6 +93,7 @@ function convertAttributesToCompletionItems(
       },
     })
   }
+
   return result
 }
 
@@ -86,11 +105,6 @@ export const corePrimitiveTypes: CompletionItem[] = convertToCompletionItems(
 export const allowedBlockTypes: CompletionItem[] = convertToCompletionItems(
   completions.blockTypes,
   CompletionItemKind.Class,
-)
-
-export const supportedDataSourceFields: CompletionItem[] = convertToCompletionItems(
-  completions.dataSourceFields,
-  CompletionItemKind.Field,
 )
 
 export const relationModeValues: CompletionItem[] = convertToCompletionItems(
@@ -107,6 +121,7 @@ export function givenBlockAttributeParams({
   blockAttribute,
   wordBeforePosition,
   datasourceProvider,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-vars
   previewFeatures,
 }: {
   blockAttribute: '@@unique' | '@@id' | '@@index' | '@@fulltext'
@@ -310,22 +325,16 @@ export const fieldAttributes: CompletionItem[] = convertAttributesToCompletionIt
   CompletionItemKind.Property,
 )
 
-export const sortLengthProperties: CompletionItem[] =
+export const sortLengthProperties: CompletionItem[] = convertToCompletionItems(
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  convertToCompletionItems(
-    completions.fieldAttributes
-      .find((item) => item.label === '@unique')!
-      .params.filter((item) => item.label === 'length' || item.label === 'sort'),
-    CompletionItemKind.Property,
-  )
-
-export const relationArguments: CompletionItem[] = convertAttributesToCompletionItems(
-  completions.relationArguments,
+  completions.fieldAttributes
+    .find((item) => item.label === '@unique')!
+    .params.filter((item) => item.label === 'length' || item.label === 'sort'),
   CompletionItemKind.Property,
 )
 
-export const dataSourceUrlArguments: CompletionItem[] = convertAttributesToCompletionItems(
-  completions.datasourceUrlArguments,
+export const relationArguments: CompletionItem[] = convertAttributesToCompletionItems(
+  completions.relationArguments,
   CompletionItemKind.Property,
 )
 
@@ -504,8 +513,16 @@ export function handlePreviewFeatures(
   }
 }
 
-export function getNativeTypes(document: TextDocument, prismaType: string): CompletionItem[] {
-  let nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document)
+export function getNativeTypes(
+  document: TextDocument,
+  prismaType: string,
+  onError?: (errorMessage: string) => void,
+): CompletionItem[] {
+  let nativeTypes: NativeTypeConstructors[] = nativeTypeConstructors(document, (errorMessage: string) => {
+    if (onError) {
+      onError(errorMessage)
+    }
+  })
 
   if (nativeTypes.length === 0) {
     console.log('Did not receive any native type suggestions from prisma-fmt call.')
@@ -551,6 +568,7 @@ export const blockTypeToCompletionItemKind = (type: BlockType) => {
     model: CompletionItemKind.Class,
     enum: CompletionItemKind.Enum,
     type: CompletionItemKind.Interface,
+    view: CompletionItemKind.Class,
     datasource: CompletionItemKind.Struct,
     generator: CompletionItemKind.Function,
     import: CompletionItemKind.Struct,

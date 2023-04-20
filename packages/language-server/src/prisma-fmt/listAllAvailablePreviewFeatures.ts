@@ -1,17 +1,23 @@
-import prismaFmt from '@prisma/prisma-fmt-wasm'
+import { prismaFmt } from '../wasm'
+import { handleFormatPanic, handleWasmError } from './util'
 
 export default function listAllAvailablePreviewFeatures(onError?: (errorMessage: string) => void): string[] {
   console.log('running preview_features() from prisma-fmt')
   try {
+    if (process.env.FORCE_PANIC_PRISMA_FMT_LOCAL) {
+      handleFormatPanic(() => {
+        console.debug('Triggering a Rust panic...')
+        prismaFmt.debug_panic()
+      })
+    }
+
     const result = prismaFmt.preview_features()
     return JSON.parse(result) as string[]
-  } catch (err: any) {
-    const errorMessage = "prisma-fmt error'd during getting available preview features.\n"
+  } catch (e) {
+    const err = e as Error
 
-    if (onError) {
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-      onError(`${errorMessage} ${err}`)
-    }
+    handleWasmError(err, 'preview_features', onError)
+
     return []
   }
 }

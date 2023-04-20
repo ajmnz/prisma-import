@@ -15,10 +15,8 @@ import {
   fieldAttributes,
   allowedBlockTypes,
   corePrimitiveTypes,
-  supportedDataSourceFields,
   supportedGeneratorFields,
   relationArguments,
-  dataSourceUrlArguments,
   dataSourceProviders,
   dataSourceProviderArguments,
   generatorProviders,
@@ -42,7 +40,7 @@ import listAllAvailablePreviewFeatures from '../prisma-fmt/listAllAvailablePrevi
 import {
   Block,
   BlockType,
-  getModelOrTypeOrEnumBlock,
+  getModelOrTypeOrEnumOrViewBlock,
   declaredNativeTypes,
   getAllRelationNames,
   isInsideAttribute,
@@ -60,16 +58,14 @@ import {
   relativeToAbsolutePath,
   absoluteToRelativePath,
 } from '../util'
-import { getAllSchemas } from '../imports'
+import { IMPORTABLE_BLOCKS, getAllSchemas } from '../imports'
 import { fileURLToPath } from 'url'
 
-function getSuggestionForModelBlockAttribute(block: Block, lines: string[]): CompletionItem[] {
-  if (block.type !== 'model') {
-    return []
-  }
-  // create deep copy
-  const suggestions: CompletionItem[] = filterSuggestionsForBlock(klona(blockAttributes), block, lines)
-
+const getSuggestionForBlockAttribute = (
+  block: Block,
+  lines: string[],
+  suggestions: CompletionItem[],
+): CompletionItem[] => {
   // We can filter on the datasource
   const datasourceProvider = getFirstDatasourceProvider(lines)
   // We can filter on the previewFeatures enabled
@@ -83,12 +79,44 @@ function getSuggestionForModelBlockAttribute(block: Block, lines: string[]): Com
       previewFeatures?.includes('fulltextindex'),
   )
 
+  const isMultiSchemaAvailable = Boolean(
+    datasourceProvider &&
+      (datasourceProvider.includes('postgres') ||
+        datasourceProvider.includes('cockroachdb') ||
+        datasourceProvider.includes('sqlserver')) &&
+      previewFeatures?.includes('multischema'),
+  )
+
   if (isFullTextAvailable === false) {
     // fullTextIndex is not available, we need to filter it out
-    return suggestions.filter((arg) => arg.label !== '@@fulltext')
+    suggestions = suggestions.filter((arg) => arg.label !== '@@fulltext')
+  }
+
+  if (!isMultiSchemaAvailable) {
+    suggestions = suggestions.filter((item) => item.label !== '@@schema')
   }
 
   return suggestions
+}
+
+function getSuggestionForModelBlockAttribute(block: Block, lines: string[]): CompletionItem[] {
+  if (block.type !== 'model') {
+    return []
+  }
+
+  const suggestions: CompletionItem[] = filterSuggestionsForBlock(klona(blockAttributes), block, lines)
+
+  return getSuggestionForBlockAttribute(block, lines, suggestions)
+}
+
+const getSuggestionForViewBlockAttribute = (block: Block, lines: string[]): CompletionItem[] => {
+  if (block.type !== 'view') {
+    return []
+  }
+
+  const suggestions: CompletionItem[] = filterSuggestionsForBlock(klona(blockAttributes), block, lines)
+
+  return getSuggestionForBlockAttribute(block, lines, suggestions)
 }
 
 export function getSuggestionForNativeTypes(
@@ -96,8 +124,9 @@ export function getSuggestionForNativeTypes(
   lines: string[],
   wordsBeforePosition: string[],
   document: TextDocument,
+  onError?: (errorMessage: string) => void,
 ): CompletionList | undefined {
-  const activeFeatureFlag = declaredNativeTypes(document)
+  const activeFeatureFlag = declaredNativeTypes(document, onError)
   if (
     // TODO type? native "@db." types?
     foundBlock.type !== 'model' ||
@@ -114,7 +143,7 @@ export function getSuggestionForNativeTypes(
 
   // line
   const prismaType = wordsBeforePosition[1].replace('?', '').replace('[]', '')
-  const suggestions = getNativeTypes(document, prismaType)
+  const suggestions = getNativeTypes(document, prismaType, onError)
 
   return {
     items: suggestions,
@@ -140,12 +169,8 @@ export function getSuggestionForFieldAttribute(
   lines: string[],
   wordsBeforePosition: string[],
   document: TextDocument,
+  onError?: (errorMessage: string) => void,
 ): CompletionList | undefined {
-  // TODO type? suggestions for "@..." for type?
-  if (block.type !== 'model') {
-    return
-  }
-
   const fieldType = getFieldType(currentLine)
   // If we don't find a field type (e.g. String, Int...), return no suggestion
   if (!fieldType) {
@@ -158,7 +183,7 @@ export function getSuggestionForFieldAttribute(
   if (wordsBeforePosition.length >= 2) {
     const datasourceName = getFirstDatasourceName(lines)
     const prismaType = wordsBeforePosition[1]
-    const nativeTypeSuggestions = getNativeTypes(document, prismaType)
+    const nativeTypeSuggestions = getNativeTypes(document, prismaType, onError)
 
     if (datasourceName) {
       if (!currentLine.includes(`@${datasourceName}`)) {
@@ -190,7 +215,7 @@ export function getSuggestionForFieldAttribute(
 
   suggestions.push(...fieldAttributes)
 
-  const modelOrTypeOrEnum = getModelOrTypeOrEnumBlock(fieldType, lines)
+  const modelOrTypeOrEnum = getModelOrTypeOrEnumOrViewBlock(fieldType, lines)
 
   suggestions = filterSuggestionsForLine(suggestions, currentLine, fieldType, modelOrTypeOrEnum?.type)
 
@@ -229,7 +254,7 @@ export function getSuggestionsForFieldTypes(
     const importableSchemas = getAllSchemas().filter((s) => s.path !== fileURLToPath(document.uri))
 
     for (const schema of importableSchemas) {
-      const importableBlocks = schema.blocks.filter((b) => ['enum', 'model', 'type'].includes(b.type))
+      const importableBlocks = schema.blocks.filter((b) => IMPORTABLE_BLOCKS.includes(b.type))
       const relativeSchemaPath = absoluteToRelativePath(document, schema.path)
 
       for (const block of importableBlocks) {
@@ -306,27 +331,6 @@ export function getSuggestionsForFieldTypes(
   }
 }
 
-function getSuggestionForDataSourceField(block: Block, lines: string[], position: Position): CompletionItem[] {
-  // create deep copy
-  let suggestions: CompletionItem[] = klona(supportedDataSourceFields)
-
-  const postgresExtensionsEnabled = getAllPreviewFeaturesFromGenerators(lines)?.includes('postgresqlextensions')
-  const isPostgres = getFirstDatasourceProvider(lines)?.includes('postgres')
-
-  if (!(postgresExtensionsEnabled && isPostgres)) {
-    suggestions = suggestions.filter((item) => item.label !== 'extensions')
-  }
-
-  const labels: string[] = removeInvalidFieldSuggestions(
-    suggestions.map((item) => item.label),
-    block,
-    lines,
-    position,
-  )
-
-  return suggestions.filter((item) => labels.includes(item.label))
-}
-
 function getSuggestionForGeneratorField(block: Block, lines: string[], position: Position): CompletionItem[] {
   // create deep copy
   const suggestions: CompletionItem[] = klona(supportedGeneratorFields)
@@ -352,14 +356,14 @@ export function getSuggestionForFirstInsideBlock(
 ): CompletionList {
   let suggestions: CompletionItem[] = []
   switch (blockType) {
-    case 'datasource':
-      suggestions = getSuggestionForDataSourceField(block, lines, position)
-      break
     case 'generator':
       suggestions = getSuggestionForGeneratorField(block, lines, position)
       break
     case 'model':
       suggestions = getSuggestionForModelBlockAttribute(block, lines)
+      break
+    case 'view':
+      suggestions = getSuggestionForViewBlockAttribute(block, lines)
       break
     case 'type':
       // No suggestions
@@ -372,28 +376,35 @@ export function getSuggestionForFirstInsideBlock(
   }
 }
 
+/**
+ * Returns the currently available _blocks_ for completion.
+ * Currently available: Generator, Datasource, Model, Enum, View
+ * @param lines
+ * @returns the list of block suggestions
+ */
 export function getSuggestionForBlockTypes(lines: string[]): CompletionList {
   // create deep copy
-  const suggestions: CompletionItem[] = klona(allowedBlockTypes)
+  let suggestions: CompletionItem[] = klona(allowedBlockTypes)
 
-  // enum is not supported in sqlite
-  let foundDataSourceBlock = false
-  for (const item of lines) {
-    if (item.includes('datasource')) {
-      foundDataSourceBlock = true
-      continue
-    }
-    if (foundDataSourceBlock) {
-      if (item.includes('}')) {
-        break
-      }
-      if (item.startsWith('provider') && item.includes('sqlite')) {
-        suggestions.pop()
-      }
-    }
-    if (!suggestions.map((sugg) => sugg.label).includes('enum')) {
-      break
-    }
+  const datasourceProvider = getFirstDatasourceProvider(lines)
+  const previewFeatures = getAllPreviewFeaturesFromGenerators(lines)
+
+  const isEnumAvailable = Boolean(!datasourceProvider?.includes('sqlite'))
+
+  const isViewAvailable = Boolean(previewFeatures?.includes('views'))
+
+  const isTypeAvailable = Boolean(datasourceProvider?.includes('mongodb'))
+
+  if (!isEnumAvailable) {
+    suggestions = suggestions.filter((item) => item.label !== 'enum')
+  }
+
+  if (!isViewAvailable) {
+    suggestions = suggestions.filter((item) => item.label !== 'view')
+  }
+
+  if (!isTypeAvailable) {
+    suggestions = suggestions.filter((item) => item.label !== 'type')
   }
 
   return {
@@ -420,6 +431,7 @@ export function getSuggestionForSupportedFields(
   currentLineUntrimmed: string,
   position: Position,
   lines: string[],
+  onError?: (errorMessage: string) => void,
 ): CompletionList | undefined {
   let suggestions: string[] = []
   const isInsideQuotation: boolean = isInsideQuotationMark(currentLineUntrimmed, position)
@@ -447,7 +459,7 @@ export function getSuggestionForSupportedFields(
       }
       // previewFeatures
       else if (currentLine.startsWith('previewFeatures')) {
-        const generatorPreviewFeatures: string[] = listAllAvailablePreviewFeatures()
+        const generatorPreviewFeatures: string[] = listAllAvailablePreviewFeatures(onError)
         if (generatorPreviewFeatures.length > 0) {
           return handlePreviewFeatures(generatorPreviewFeatures, position, currentLineUntrimmed, isInsideQuotation)
         }
@@ -484,21 +496,21 @@ export function getSuggestionForSupportedFields(
             isIncomplete: true,
           }
         }
-        // url
-      } else if (currentLine.startsWith('url')) {
+      }
+      // url or shadowDatabaseUrl or directUrl
+      else if (
+        currentLine.startsWith('url') ||
+        currentLine.startsWith('shadowDatabaseUrl') ||
+        currentLine.startsWith('directUrl')
+      ) {
         // check if inside env
         if (isInsideAttribute(currentLineUntrimmed, position, '()')) {
-          suggestions = ['DATABASE_URL']
-        } else {
-          if (currentLine.includes('env')) {
-            return {
-              items: dataSourceUrlArguments.filter((a) => !a.label.includes('env')),
-              isIncomplete: true,
-            }
-          }
-          return {
-            items: dataSourceUrlArguments,
-            isIncomplete: true,
+          if (currentLine.startsWith('url')) {
+            suggestions = ['DATABASE_URL']
+          } else if (currentLine.startsWith('shadowDatabaseUrl')) {
+            suggestions = ['SHADOW_DATABASE_URL']
+          } else if (currentLine.startsWith('directUrl')) {
+            suggestions = ['DIRECT_URL']
           }
         }
       }
@@ -518,14 +530,14 @@ export function getSuggestionForSupportedFields(
         if (isInsideQuotation) {
           return {
             items: relationModeValuesSuggestion,
-            isIncomplete: true,
+            isIncomplete: false,
           }
         }
         // If line ends with `"`, a value is already set.
         else if (!currentLine.endsWith('"')) {
           return {
             items: relationModeValuesSuggestionWithQuotes,
-            isIncomplete: true,
+            isIncomplete: false,
           }
         }
       }
@@ -719,7 +731,7 @@ function getDefaultValues({
     })
   }
 
-  const modelOrEnum = getModelOrTypeOrEnumBlock(fieldType, lines)
+  const modelOrEnum = getModelOrTypeOrEnumOrViewBlock(fieldType, lines)
   if (modelOrEnum && modelOrEnum.type === 'enum') {
     // get fields from enum block for suggestions
     const values: string[] = getFieldsFromCurrentBlock(lines, modelOrEnum)
@@ -729,23 +741,21 @@ function getDefaultValues({
   return suggestions
 }
 
-function getSuggestionsForAttribute(
-  {
-    attribute,
-    wordsBeforePosition,
-    untrimmedCurrentLine,
-    lines,
-    block,
-    position,
-  }: {
-    attribute?: '@relation'
-    wordsBeforePosition: string[]
-    untrimmedCurrentLine: string
-    lines: string[]
-    block: Block
-    position: Position
-  }, // eslint-disable-line @typescript-eslint/no-unused-vars
-): CompletionList | undefined {
+function getSuggestionsForAttribute({
+  attribute,
+  wordsBeforePosition,
+  untrimmedCurrentLine,
+  lines,
+  block,
+  position,
+}: {
+  attribute?: '@relation'
+  wordsBeforePosition: string[]
+  untrimmedCurrentLine: string
+  lines: string[]
+  block: Block
+  position: Position
+}): CompletionList | undefined {
   const firstWordBeforePosition = wordsBeforePosition[wordsBeforePosition.length - 1]
   const secondWordBeforePosition = wordsBeforePosition[wordsBeforePosition.length - 2]
   const wordBeforePosition = firstWordBeforePosition === '' ? secondWordBeforePosition : firstWordBeforePosition
@@ -785,7 +795,7 @@ function getSuggestionsForAttribute(
     if (isInsideGivenProperty(untrimmedCurrentLine, wordsBeforePosition, 'references', position)) {
       // Get the name by potentially removing ? and [] from Foo? or Foo[]
       const referencedModelName = wordsBeforePosition[1].replace('?', '').replace('[]', '')
-      const referencedBlock = getModelOrTypeOrEnumBlock(referencedModelName, lines)
+      const referencedBlock = getModelOrTypeOrEnumOrViewBlock(referencedModelName, lines)
       // referenced model does not exist
       // TODO type?
       if (!referencedBlock || referencedBlock.type !== 'model') {
@@ -876,6 +886,7 @@ function getSuggestionsForAttribute(
           let name = value
           // Example for `@@index([email,address.|])` when there is no space between fields
           if (name?.includes(',')) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             name = name.split(',').pop()!
           }
           // Remove . to only get the name
@@ -1150,7 +1161,7 @@ export function getSuggestionsForImportBlocks(document: TextDocument, currentLin
 
   return {
     items: schemaMatch.blocks
-      .filter((b) => ['enum', 'model', 'type'].includes(b.type))
+      .filter((b) => IMPORTABLE_BLOCKS.includes(b.type))
       .map((b) => ({
         kind: blockTypeToCompletionItemKind(b.type),
         label: b.name,

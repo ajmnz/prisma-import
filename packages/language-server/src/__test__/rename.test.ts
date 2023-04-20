@@ -3,6 +3,7 @@ import { handleRenameRequest } from '../MessageHandler'
 import { WorkspaceEdit, RenameParams, Position } from 'vscode-languageserver'
 import * as assert from 'assert'
 import { getTextDocument } from './helper'
+import { MAX_SAFE_VALUE_i32 } from '../util'
 
 function assertRename(expected: WorkspaceEdit, document: TextDocument, newName: string, position: Position): void {
   const params: RenameParams = {
@@ -355,8 +356,8 @@ suite('Rename', () => {
             {
               newText: ' @map("Album")',
               range: {
-                start: { line: 136, character: Number.MAX_VALUE },
-                end: { line: 136, character: Number.MAX_VALUE },
+                start: { line: 136, character: MAX_SAFE_VALUE_i32 },
+                end: { line: 136, character: MAX_SAFE_VALUE_i32 },
               },
             },
           ],
@@ -402,8 +403,8 @@ suite('Rename', () => {
             {
               newText: ' @map("authorId")',
               range: {
-                start: { line: 4, character: Number.MAX_VALUE },
-                end: { line: 4, character: Number.MAX_VALUE },
+                start: { line: 4, character: MAX_SAFE_VALUE_i32 },
+                end: { line: 4, character: MAX_SAFE_VALUE_i32 },
               },
             },
             {
@@ -444,8 +445,8 @@ suite('Rename', () => {
             {
               newText: ' @map("title")',
               range: {
-                start: { line: 17, character: Number.MAX_VALUE },
-                end: { line: 17, character: Number.MAX_VALUE },
+                start: { line: 17, character: MAX_SAFE_VALUE_i32 },
+                end: { line: 17, character: MAX_SAFE_VALUE_i32 },
               },
             },
             {
@@ -478,8 +479,8 @@ suite('Rename', () => {
             {
               newText: ' @map("humanId")',
               range: {
-                start: { line: 25, character: Number.MAX_VALUE },
-                end: { line: 25, character: Number.MAX_VALUE },
+                start: { line: 25, character: MAX_SAFE_VALUE_i32 },
+                end: { line: 25, character: MAX_SAFE_VALUE_i32 },
               },
             },
             {
@@ -553,8 +554,8 @@ suite('Rename', () => {
             {
               newText: ' @map("A_VARIANT_WITH_UNDERSCORES")',
               range: {
-                start: { line: 8, character: Number.MAX_VALUE },
-                end: { line: 8, character: Number.MAX_VALUE },
+                start: { line: 8, character: MAX_SAFE_VALUE_i32 },
+                end: { line: 8, character: MAX_SAFE_VALUE_i32 },
               },
             },
             {

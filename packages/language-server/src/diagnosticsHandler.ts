@@ -1,5 +1,5 @@
 import { Diagnostic, DiagnosticSeverity, DiagnosticTag } from 'vscode-languageserver/node'
-import { getBlockAtPosition } from './util'
+import { MAX_SAFE_VALUE_i32, getBlockAtPosition } from './util'
 
 export function createDiagnosticsForIgnore(lines: string[]): Diagnostic[] {
   const diagnostics: Diagnostic[] = []
@@ -24,7 +24,7 @@ export function createDiagnosticsForIgnore(lines: string[]): Diagnostic[] {
       diagnostics.push({
         range: {
           start: { line: index, character: 0 },
-          end: { line: index, character: Number.MAX_VALUE },
+          end: { line: index, character: MAX_SAFE_VALUE_i32 },
         },
         message:
           '@ignore: When using Prisma Migrate, this field will be kept in sync with the database schema, however, it will not be exposed in Prisma Client.',

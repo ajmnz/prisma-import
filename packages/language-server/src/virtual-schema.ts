@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'url'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { getAllBlocks, getAllSchemas, SchemaWithBlocks } from './imports'
+import { getAllBlocks, getAllSchemas, IMPORTABLE_BLOCKS, SchemaWithBlocks } from './imports'
 import {
   convertDocumentTextToTrimmedLineArray,
   fullDocumentRange,
@@ -26,7 +26,7 @@ export const getVirtualSchema = (document: TextDocument) => {
   }
 
   const documentSchemaBlockNames = documentSchema.blocks
-    .filter((b) => ['enum', 'type', 'model'].includes(b.type))
+    .filter((b) => IMPORTABLE_BLOCKS.includes(b.type))
     .map((b) => b.name)
 
   // Find direct imports in document schema so we can add

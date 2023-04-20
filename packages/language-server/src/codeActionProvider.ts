@@ -9,7 +9,7 @@ import {
 } from 'vscode-languageserver'
 import levenshtein from 'js-levenshtein'
 import { convertDocumentTextToTrimmedLineArray, getAllRelationNames } from './util'
-import prismaFmt from '@prisma/prisma-fmt-wasm'
+import codeActions from './prisma-fmt/codeActions'
 
 function getInsertRange(document: TextDocument): Range {
   // to insert text into a document create a range where start === end.
@@ -81,19 +81,22 @@ function addTypeModifiers(hasTypeModifierArray: boolean, hasTypeModifierOptional
   return suggestion
 }
 
-export function quickFix(textDocument: TextDocument, params: CodeActionParams): CodeAction[] {
+export function quickFix(
+  textDocument: TextDocument,
+  params: CodeActionParams,
+  onError?: (errorMessage: string) => void,
+): CodeAction[] {
   const diagnostics: Diagnostic[] = params.context.diagnostics
 
   if (!diagnostics || diagnostics.length === 0) {
     return []
   }
 
-  // get code actions from prisma-fmt
-  const actionDataFromPrismaFmt: string = prismaFmt.code_actions(textDocument.getText(), JSON.stringify(params))
-  // For debugging
-  // console.log({ actionDataFromPrismaFmt })
-
-  const codeActions: CodeAction[] = JSON.parse(actionDataFromPrismaFmt) as CodeAction[]
+  const codeActionList = codeActions(textDocument.getText(), JSON.stringify(params), (errorMessage: string) => {
+    if (onError) {
+      onError(errorMessage)
+    }
+  })
 
   // Add code actions from typescript side
   for (const diag of diagnostics) {
@@ -109,7 +112,7 @@ export function quickFix(textDocument: TextDocument, params: CodeActionParams): 
       const lines: string[] = convertDocumentTextToTrimmedLineArray(textDocument)
       const spellingSuggestion = getSpellingSuggestions(diagText, getAllRelationNames(lines))
       if (spellingSuggestion) {
-        codeActions.push({
+        codeActionList.push({
           title: `Change spelling to '${spellingSuggestion}'`,
           kind: CodeActionKind.QuickFix,
           diagnostics: [diag],
@@ -125,7 +128,7 @@ export function quickFix(textDocument: TextDocument, params: CodeActionParams): 
           },
         })
       }
-      codeActions.push({
+      codeActionList.push({
         title: `Create new model '${diagText}'`,
         kind: CodeActionKind.QuickFix,
         diagnostics: [diag],
@@ -140,7 +143,7 @@ export function quickFix(textDocument: TextDocument, params: CodeActionParams): 
           },
         },
       })
-      codeActions.push({
+      codeActionList.push({
         title: `Create new enum '${diagText}'`,
         kind: CodeActionKind.QuickFix,
         diagnostics: [diag],
@@ -159,7 +162,7 @@ export function quickFix(textDocument: TextDocument, params: CodeActionParams): 
       diag.severity === DiagnosticSeverity.Warning &&
       diag.message.includes("property has been renamed to 'previewFeatures'")
     ) {
-      codeActions.push({
+      codeActionList.push({
         title: "Rename property to 'previewFeatures'",
         kind: CodeActionKind.QuickFix,
         diagnostics: [diag],
@@ -188,7 +191,7 @@ export function quickFix(textDocument: TextDocument, params: CodeActionParams): 
           'import',
         ])
         if (spellingSuggestion) {
-          codeActions.push({
+          codeActionList.push({
             title: `Change spelling to '${spellingSuggestion}'`,
             kind: CodeActionKind.QuickFix,
             diagnostics: [diag],
@@ -215,5 +218,5 @@ export function quickFix(textDocument: TextDocument, params: CodeActionParams): 
     }
   }
 
-  return codeActions
+  return codeActionList
 }
