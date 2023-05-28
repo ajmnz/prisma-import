@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@types/mocha": "10.0.1",
-    "@types/node": "14.18.42",
+    "@types/node": "14.18.48",
     "mocha": "10.2.0",
     "release-it": "15.10.1",
     "rimraf": "3.0.2",
