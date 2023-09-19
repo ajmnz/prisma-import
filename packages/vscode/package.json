@@ -165,7 +165,7 @@
     "@types/mocha": "10.0.1",
     "@types/vscode": "1.56.0",
     "@vscode/test-electron": "2.3.4",
-    "@vscode/vsce": "2.20.1",
+    "@vscode/vsce": "2.21.0",
     "is-ci": "3.0.1",
     "mocha": "10.2.0",
     "ovsx": "0.8.3",
