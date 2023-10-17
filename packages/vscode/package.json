@@ -162,7 +162,7 @@
   },
   "devDependencies": {
     "@types/glob": "8.1.0",
-    "@types/mocha": "10.0.1",
+    "@types/mocha": "10.0.2",
     "@types/vscode": "1.56.0",
     "@vscode/test-electron": "2.3.4",
     "@vscode/vsce": "2.21.0",
