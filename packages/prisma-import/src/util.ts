@@ -2,14 +2,12 @@ import { getPrismaConfigFromPackageJson } from '@prisma/internals'
 import { PrismaImportConfig } from './types'
 import fs from 'fs'
 import path from 'path'
-import _glob from 'glob'
 import { promisify } from 'util'
 
 export const stat = promisify(fs.stat)
 export const readFile = promisify(fs.readFile)
 export const mkdir = promisify(fs.mkdir)
 export const writeFile = promisify(fs.writeFile)
-export const glob = promisify(_glob)
 
 /**
  * Determines if a path already exists. This is a replacement for `fs.exists`
@@ -47,7 +45,7 @@ export async function ensureDirectoryExistence(filePath: string) {
 
 export const getConfigFromPackageJson = async (
   key: keyof NonNullable<PrismaImportConfig['import']>,
-): Promise<string | undefined> => {
+): Promise<string | string[] | undefined> => {
   const prismaConfig = (await getPrismaConfigFromPackageJson(process.cwd())) as {
     data: PrismaImportConfig | undefined
     packagePath: string
