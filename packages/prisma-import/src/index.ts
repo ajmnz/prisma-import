@@ -6,6 +6,7 @@ import prompts from 'prompts'
 import path from 'path'
 import { exists, getConfigFromPackageJson, glob } from './util'
 import { merge } from './merge'
+import { pathsFromBase } from './base'
 
 const main = async () => {
   const args = arg(process.argv.slice(2), {
@@ -13,6 +14,8 @@ const main = async () => {
     '-s': '--schemas',
     '--output': String,
     '-o': '--output',
+    '--base': String,
+    '-b': '--base',
     '--dry': Boolean,
     '-d': '--dry',
     '--help': Boolean,
@@ -40,7 +43,8 @@ ${chalk.bold('Flags')}
           -d, --dry     Print the resulting schema to stdout
           -f, --force   Skip asking for confirmation on schema overwrite
           -o, --output  Specify where you want your resulting schema to be written
-          -s, --schemas Specify where your schemas are using a glob pattern
+          -b, --base    Specify base file for determining merge via imports. Do not use with --schemas
+          -s, --schemas Specify where your schemas are using a glob pattern. Do not use with --base
     `),
     )
 
@@ -48,35 +52,67 @@ ${chalk.bold('Flags')}
   }
 
   //
-  // Get glob
+  // Get possible parameter inputs
   //
+  const schemasFromArg = args['--schemas']
+  const schemasFromPackage = await getConfigFromPackageJson('schemas')
+  const baseFromArg = args['--base']
+  const baseFromPackage = await getConfigFromPackageJson('base')
 
-  let schemasGlob = args['--schemas']
-
-  if (!args['--schemas']) {
-    const config = await getConfigFromPackageJson('schemas')
-    schemasGlob = config ? [config] : undefined
+  //
+  // Ensure schemas and base are mutally exclusive
+  //
+  if ((!!schemasFromArg || !!schemasFromPackage) && (!!baseFromArg || !!baseFromPackage)) {
+    throw new Error('Provide either a base file or schema glob patterns, not both.')
   }
 
-  if (!schemasGlob?.length) {
+  if (!schemasFromArg && !schemasFromPackage && !baseFromArg && !baseFromPackage) {
     throw new Error(
-      'Provide a glob pattern to find your schemas. Either pass it with `--schemas` or add it to your package.json at `prisma.import.schemas`',
+      'Provide a glob pattern to find your schemas. Either pass it with `--schemas` or add it to your package.json at `prisma.import.schemas`.\nAlternatively, Provide a base file. Either passit with `--base` or add it to your package.json at `prisma.import.base`',
     )
   }
 
-  const schemaPaths = (
-    await Promise.all(
-      schemasGlob.map(
-        async (s) =>
-          await glob(s, {
-            cwd: process.cwd(),
-          }),
-      ),
-    )
-  ).flat()
+  //
+  // Prioritize base over schemas
+  //
+  const useBase = !!baseFromArg || !!baseFromPackage
 
-  if (!schemaPaths.length) {
-    throw new Error(`No schemas found using glob pattern \`${schemasGlob.join(', ')}\``)
+  let schemaPaths: string[] = []
+
+  if (useBase) {
+    const relativeBasePath = baseFromArg ?? baseFromPackage
+
+    if (relativeBasePath) {
+      const absoluteBasePath = path.isAbsolute(relativeBasePath) ? relativeBasePath : path.resolve(relativeBasePath)
+
+      schemaPaths = await pathsFromBase(absoluteBasePath)
+    }
+  } else {
+    //
+    // Get glob
+    //
+    let schemasGlob = schemasFromArg
+
+    if (!schemasGlob?.length) {
+      schemasGlob = schemasFromPackage ? [schemasFromPackage] : undefined
+    }
+
+    if (schemasGlob) {
+      schemaPaths = (
+        await Promise.all(
+          schemasGlob.map(
+            async (s) =>
+              await glob(s, {
+                cwd: process.cwd(),
+              }),
+          ),
+        )
+      ).flat()
+
+      if (!schemaPaths.length) {
+        throw new Error(`No schemas found using glob pattern \`${schemasGlob.join(', ')}\``)
+      }
+    }
   }
 
   //

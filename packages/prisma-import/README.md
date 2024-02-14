@@ -25,6 +25,7 @@ Usage
   $ prisma-import [flags/options]
   $ prisma-import -s "glob/pattern/for/schemas" -o path/to/output/schema.prisma
   $ prisma-import -s "glob/pattern/for/schemas" -s "other/glob/pattern/for/schemas" -o path/to/output/schema.prisma
+  $ prisma-import -b path/to/base/file.schema   -o path/to/output/schema.prisma
 
 Flags
 
@@ -32,5 +33,6 @@ Flags
           -d, --dry     Print the resulting schema to stdout
           -f, --force   Skip asking for confirmation on schema overwrite
           -o, --output  Specify where you want your resulting schema to be written
-          -s, --schemas Specify where your schemas are using a glob pattern
+          -b, --base    Specify base file for determining merge via imports. Do not use with --schemas
+          -s, --schemas Specify where your schemas are using a glob pattern. Do not use with --base
 ```
