@@ -23,6 +23,8 @@ Compile all your schemas into one and replace all imports
 Usage
 
   $ prisma-import [flags/options]
+  $ prisma-import -s "glob/pattern/for/schemas" -o path/to/output/schema.prisma
+  $ prisma-import -s "glob/pattern/for/schemas" -s "other/glob/pattern/for/schemas" -o path/to/output/schema.prisma
 
 Flags
 
