@@ -1,14 +1,10 @@
 import { getPrismaConfigFromPackageJson } from '@prisma/internals'
 import { PrismaImportConfig } from './types'
-import fs from 'fs'
+import { mkdir, stat } from 'fs/promises'
 import path from 'path'
 import _glob from 'glob'
 import { promisify } from 'util'
 
-export const stat = promisify(fs.stat)
-export const readFile = promisify(fs.readFile)
-export const mkdir = promisify(fs.mkdir)
-export const writeFile = promisify(fs.writeFile)
 export const glob = promisify(_glob)
 
 /**
