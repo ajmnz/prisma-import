@@ -35,4 +35,5 @@ Flags
           -o, --output  Specify where you want your resulting schema to be written
           -b, --base    Specify base file for determining merge via imports. Do not use with --schemas
           -s, --schemas Specify where your schemas are using a glob pattern. Do not use with --base
+          -q, --quiet   Skip display of log messages
 ```

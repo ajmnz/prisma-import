@@ -22,6 +22,8 @@ const main = async () => {
     '-h': '--help',
     '--force': Boolean,
     '-f': '--force',
+    '--quiet': Boolean,
+    '-q': '--quiet',
   })
 
   if (args instanceof Error) {
@@ -43,8 +45,9 @@ ${chalk.bold('Flags')}
           -d, --dry     Print the resulting schema to stdout
           -f, --force   Skip asking for confirmation on schema overwrite
           -o, --output  Specify where you want your resulting schema to be written
-          -b, --base    Specify a base file to recursively resolve schemas from import statements. Mutually exclusive with --schemas.
-          -s, --schemas Specify where your schemas are using a glob pattern. Mutually exclusive with --base.
+          -b, --base    Specify a base file to recursively resolve schemas from import statements. Mutually exclusive with --schemas
+          -s, --schemas Specify where your schemas are using a glob pattern. Mutually exclusive with --base
+          -q, --quiet   Skip display of log messages
     `),
     )
 
@@ -58,6 +61,9 @@ ${chalk.bold('Flags')}
   const schemasFromPackage = await getConfigFromPackageJson('schemas')
   const baseFromArg = args['--base']
   const baseFromPackage = await getConfigFromPackageJson('base')
+  const dryMode = Boolean(args['--dry'])
+  const forceMode = Boolean(args['--force'])
+  const quietMode = Boolean(args['--quiet'])
 
   //
   // Ensure schemas and base are mutally exclusive
@@ -86,6 +92,12 @@ ${chalk.bold('Flags')}
       const absoluteBasePath = path.isAbsolute(relativeBasePath) ? relativeBasePath : path.resolve(relativeBasePath)
 
       schemaPaths = await pathsFromBase(absoluteBasePath)
+
+      if (!quietMode) {
+        console.log(
+          `✔ Resolved ${chalk.blueBright(schemaPaths.length.toString() + ' schema(s)')} from ${absoluteBasePath}`,
+        )
+      }
     }
   } else {
     //
@@ -112,6 +124,12 @@ ${chalk.bold('Flags')}
       if (!schemaPaths.length) {
         throw new Error(`No schemas found using glob pattern \`${schemasGlob.join(', ')}\``)
       }
+
+      if (!quietMode) {
+        console.log(
+          `✔ Resolved ${chalk.blueBright(schemaPaths.length.toString() + ' schema(s)')} from ${schemasGlob.join(', ')}`,
+        )
+      }
     }
   }
 
@@ -136,11 +154,7 @@ ${chalk.bold('Flags')}
   //
   // Confirm schema overwrite
   //
-
-  const dryMode = Boolean(args['--dry'])
-  const forceMode = Boolean(args['--force'])
-
-  if (dryMode) {
+  if (dryMode && !quietMode) {
     console.log(`✔ Running in ${chalk.blueBright('dry mode')}\n`)
   }
 
