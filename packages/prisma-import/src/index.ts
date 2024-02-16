@@ -43,7 +43,7 @@ ${chalk.bold('Flags')}
           -d, --dry     Print the resulting schema to stdout
           -f, --force   Skip asking for confirmation on schema overwrite
           -o, --output  Specify where you want your resulting schema to be written
-          -b, --base    Specify base file for determining merge via imports. Do not use with --schemas
+          -b, --base    Specify a base file to recursively resolve schemas from import statements. Mutually exclusive with --schemas.
           -s, --schemas Specify where your schemas are using a glob pattern. Mutually exclusive with --base.
     `),
     )
