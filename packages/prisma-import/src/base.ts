@@ -24,12 +24,10 @@ export async function pathsFromBase(filePath: string, paths: Set<string> = new S
 
 async function identifyImports(file: string): Promise<string[]> {
   const content = await readFile(file, 'utf-8')
-  const paths: string[] = content
-    .split('\n')
-    .flatMap((line) => {
-      const matches = /^(?<=\s*)(import\s*{.*)from "(.+)"/g.exec(line);
-      return matches?.[2] ? `${matches[2]}.prisma` : [];
-    })
+  const paths: string[] = content.split('\n').flatMap((line) => {
+    const matches = /^(?<=\s*)(import\s*{.*)from "(.+)"/g.exec(line)
+    return matches?.[2] ? `${matches[2]}.prisma` : []
+  })
 
   return paths
 }
