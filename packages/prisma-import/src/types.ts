@@ -7,3 +7,11 @@ export interface PrismaImportConfig extends PrismaConfig {
     base?: string
   }
 }
+
+export interface ParsedPrismaSchema {
+  imports: string[]
+  datasource: string
+  generators: string[]
+  models: string[]
+  content: string
+}

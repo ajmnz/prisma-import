@@ -7,6 +7,7 @@ import path from 'path'
 import { exists, getConfigFromPackageJson, glob } from './util'
 import { merge } from './merge'
 import { pathsFromBase } from './base'
+import { writeSchema } from './write'
 
 const main = async () => {
   const args = arg(process.argv.slice(2), {
@@ -172,7 +173,8 @@ ${chalk.bold('Flags')}
     }
   }
 
-  await merge(schemaPaths, absoluteOutputPath, dryMode)
+  const newSchema = await merge(schemaPaths)
+  await writeSchema(newSchema, absoluteOutputPath, dryMode)
 }
 
 void main()
