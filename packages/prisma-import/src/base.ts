@@ -26,16 +26,10 @@ async function identifyImports(file: string): Promise<string[]> {
   const content = await readFile(file, 'utf-8')
   const paths: string[] = content
     .split('\n')
-    .map((line) => {
-      const matches = /^(?<=\s*)(import\s*{.*)from "(.+)"/g.exec(line)
-
-      if (matches?.[2]) {
-        return `${matches[2]}.prisma`
-      }
-
-      return ''
+    .flatMap((line) => {
+      const matches = /^(?<=\s*)(import\s*{.*)from "(.+)"/g.exec(line);
+      return matches?.[2] ? `${matches[2]}.prisma` : [];
     })
-    .filter((m) => !!m)
 
   return paths
 }
