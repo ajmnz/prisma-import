@@ -26,7 +26,7 @@
   "scripts": {
     "build": "tsc",
     "release": "release-it",
-    "test": "echo 'todo'"
+    "test": "npx jest"
   },
   "dependencies": {
     "@prisma/internals": "4.16.2",
