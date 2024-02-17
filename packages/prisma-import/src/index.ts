@@ -3,7 +3,7 @@
 import { arg, format } from '@prisma/internals'
 import chalk from 'chalk'
 import prompts from 'prompts'
-import path from 'path'
+import { isAbsolute, resolve } from 'path'
 import { exists, getConfigFromPackageJson, glob } from './util'
 import { merge } from './merge'
 import { pathsFromBase } from './base'
@@ -96,7 +96,7 @@ ${chalk.bold('Flags')}
     const relativeBasePath = baseFromArg ?? baseFromPackage
 
     if (relativeBasePath) {
-      const absoluteBasePath = path.isAbsolute(relativeBasePath) ? relativeBasePath : path.resolve(relativeBasePath)
+      const absoluteBasePath = isAbsolute(relativeBasePath) ? relativeBasePath : resolve(relativeBasePath)
 
       schemaPaths = await pathsFromBase(absoluteBasePath, quietMode, verboseMode)
 
@@ -156,7 +156,7 @@ ${chalk.bold('Flags')}
     )
   }
 
-  const absoluteOutputPath = path.isAbsolute(relativeOutputPath) ? relativeOutputPath : path.resolve(relativeOutputPath)
+  const absoluteOutputPath = isAbsolute(relativeOutputPath) ? relativeOutputPath : resolve(relativeOutputPath)
 
   //
   // Confirm schema overwrite

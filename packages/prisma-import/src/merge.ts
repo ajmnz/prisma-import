@@ -1,4 +1,4 @@
-import path from 'path'
+import { basename } from 'path'
 import { parse } from './parser'
 import { ParsedPrismaSchema } from './types'
 
@@ -17,7 +17,7 @@ export const merge = async (schemaPaths: string[]): Promise<ParsedPrismaSchema> 
 
     outputContent.push('\n')
     outputContent.push('//')
-    outputContent.push(`// ${path.basename(schemaPath)}`)
+    outputContent.push(`// ${basename(schemaPath)}`)
     outputContent.push('//')
     outputContent.push('\n')
     outputContent.push(content)
