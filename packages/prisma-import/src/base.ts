@@ -1,18 +1,28 @@
 import { readFile } from './util'
 import { isAbsolute, resolve } from 'path'
+import chalk from 'chalk'
 
-export async function pathsFromBase(filePath: string, paths: Set<string> = new Set()): Promise<string[]> {
+export async function pathsFromBase(
+  filePath: string,
+  quiet: boolean,
+  verbose: boolean,
+  paths: Set<string> = new Set(),
+): Promise<string[]> {
   const absoluteFilePath = isAbsolute(filePath) ? filePath : resolve(filePath)
   const importPaths = await identifyImports(absoluteFilePath)
 
   paths.add(absoluteFilePath)
+
+  if (!quiet && verbose) {
+    console.log(`✔ Found imports from ${chalk.blueBright(absoluteFilePath)}`)
+  }
 
   for (const importPath of importPaths) {
     const basePathWithoutFile = absoluteFilePath.replace(/\/[\w -]+?\.prisma$/, '/')
     const absoluteImportPath = isAbsolute(importPath) ? importPath : resolve(basePathWithoutFile, importPath)
 
     if (!paths.has(absoluteImportPath)) {
-      const p = await pathsFromBase(absoluteImportPath, paths)
+      const p = await pathsFromBase(absoluteImportPath, quiet, verbose, paths)
 
       paths.add(absoluteImportPath)
       p.forEach((s) => paths.add(s))

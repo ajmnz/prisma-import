@@ -8,6 +8,8 @@ import { exists, getConfigFromPackageJson, glob } from './util'
 import { merge } from './merge'
 import { pathsFromBase } from './base'
 import { writeSchema } from './write'
+import { parse } from './parser'
+import { findMissing } from './find-missing'
 
 const main = async () => {
   const args = arg(process.argv.slice(2), {
@@ -25,6 +27,8 @@ const main = async () => {
     '-f': '--force',
     '--quiet': Boolean,
     '-q': '--quiet',
+    '--verbose': Boolean,
+    '-v': '--verbose',
   })
 
   if (args instanceof Error) {
@@ -49,6 +53,7 @@ ${chalk.bold('Flags')}
           -b, --base    Specify a base file to recursively resolve schemas from import statements. Mutually exclusive with --schemas
           -s, --schemas Specify where your schemas are using a glob pattern. Mutually exclusive with --base
           -q, --quiet   Skip display of log messages
+          -v, --verbose Display additional log messages
     `),
     )
 
@@ -65,6 +70,7 @@ ${chalk.bold('Flags')}
   const dryMode = Boolean(args['--dry'])
   const forceMode = Boolean(args['--force'])
   const quietMode = Boolean(args['--quiet'])
+  const verboseMode = Boolean(args['--verbose'])
 
   //
   // Ensure schemas and base are mutally exclusive
@@ -92,7 +98,7 @@ ${chalk.bold('Flags')}
     if (relativeBasePath) {
       const absoluteBasePath = path.isAbsolute(relativeBasePath) ? relativeBasePath : path.resolve(relativeBasePath)
 
-      schemaPaths = await pathsFromBase(absoluteBasePath)
+      schemaPaths = await pathsFromBase(absoluteBasePath, quietMode, verboseMode)
 
       if (!quietMode) {
         console.log(
@@ -159,7 +165,9 @@ ${chalk.bold('Flags')}
     console.log(`✔ Running in ${chalk.blueBright('dry mode')}\n`)
   }
 
-  if (!forceMode && !dryMode && (await exists(absoluteOutputPath))) {
+  const oldSchemaExists = await exists(absoluteOutputPath)
+
+  if (!forceMode && !dryMode && oldSchemaExists) {
     const result = await prompts({
       type: 'confirm',
       name: 'confirm',
@@ -174,6 +182,34 @@ ${chalk.bold('Flags')}
   }
 
   const newSchema = await merge(schemaPaths)
+
+  if (oldSchemaExists) {
+    const oldSchema = await parse(absoluteOutputPath)
+    const missing = findMissing(oldSchema, newSchema)
+
+    if (!quietMode) {
+      console.log(`✔ There are ${chalk.blueBright(missing.length)} models missing from the merged file`)
+
+      if (missing.length) {
+        console.table(missing)
+      }
+    }
+
+    if (missing.length && !forceMode) {
+      const result = await prompts({
+        type: 'confirm',
+        name: 'confirm',
+        message: `Using this schema will cause ${chalk.red('data loss')} due to ${chalk.red(
+          missing.length,
+        )} missing models. You can disable this prompt with the ${chalk.blueBright('--force')} option. Continue?`,
+      })
+
+      if (!result.confirm) {
+        process.exit(1)
+      }
+    }
+  }
+
   await writeSchema(newSchema, absoluteOutputPath, dryMode)
 }
 

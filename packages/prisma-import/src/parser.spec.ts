@@ -68,9 +68,7 @@ describe('parser', () => {
 
   it('should have a model', async () => {
     const schemaFile = resolve(tmpdir(), 'post.prisma')
-    const models: string[] = [
-      'model Post {\n    id       Int  @id @default(autoincrement())\n    author   User @relation(fields: [authorId], references: [id])\n    authorId Int\n}',
-    ]
+    const models: string[] = ['Post']
 
     const parsedSchema = await parse(schemaFile)
     expect(parsedSchema.models).toEqual(models)
@@ -78,10 +76,7 @@ describe('parser', () => {
 
   it('should have multiple model', async () => {
     const schemaFile = resolve(tmpdir(), 'multi-model.prisma')
-    const models: string[] = [
-      'model User {\n    id @id @default(autoincrement())\n    post Post[]\n}',
-      'model Post {\n    id       Int  @id @default(autoincrement())\n    author   User @relation(fields: [authorId], references: [id])\n    authorId Int\n}',
-    ]
+    const models: string[] = ['User', 'Post']
 
     const parsedSchema = await parse(schemaFile)
     expect(parsedSchema.models).toEqual(models)
