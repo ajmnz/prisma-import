@@ -1,5 +1,5 @@
 import { ParsedPrismaSchema } from './types'
-import { readFile } from './util'
+import { readFile } from 'fs/promises'
 
 export async function parse(schemaPath: string): Promise<ParsedPrismaSchema> {
   const importPattern = /(import\s\{([^}]+)\} from ".+?")/g

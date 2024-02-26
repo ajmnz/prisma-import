@@ -1,4 +1,5 @@
-import { ensureDirectoryExistence, writeFile } from './util'
+import { ensureDirectoryExistence } from './util'
+import { writeFile } from 'fs/promises'
 import { format } from '@prisma/prisma-fmt-wasm'
 import { pathToFileURL } from 'url'
 import { ParsedPrismaSchema } from './types'

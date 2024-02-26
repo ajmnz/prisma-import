@@ -1,4 +1,4 @@
-import { readFile } from './util'
+import { readFile } from 'fs/promises'
 import { isAbsolute, resolve } from 'path'
 import chalk from 'chalk'
 

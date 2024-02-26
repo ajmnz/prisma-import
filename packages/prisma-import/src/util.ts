@@ -1,14 +1,10 @@
 import { getPrismaConfigFromPackageJson } from '@prisma/internals'
 import { PrismaImportConfig } from './types'
-import fs from 'fs'
-import path from 'path'
+import { mkdir, stat } from 'fs/promises'
+import { dirname } from 'path'
 import _glob from 'glob'
 import { promisify } from 'util'
 
-export const stat = promisify(fs.stat)
-export const readFile = promisify(fs.readFile)
-export const mkdir = promisify(fs.mkdir)
-export const writeFile = promisify(fs.writeFile)
 export const glob = promisify(_glob)
 
 /**
@@ -39,9 +35,9 @@ function isErrnoException(e: unknown): e is NodeJS.ErrnoException {
  * The path `/foo/bar/baz.txt` would ensure that `/foo/bar/` exists.
  */
 export async function ensureDirectoryExistence(filePath: string) {
-  const dirname = path.dirname(filePath)
-  if (!(await exists(dirname))) {
-    await mkdir(dirname, { recursive: true })
+  const dir = dirname(filePath)
+  if (!(await exists(dir))) {
+    await mkdir(dir, { recursive: true })
   }
 }
 
