@@ -9,7 +9,7 @@ import { merge } from './merge'
 
 const main = async () => {
   const args = arg(process.argv.slice(2), {
-    '--schemas': String,
+    '--schemas': [String],
     '-s': '--schemas',
     '--output': String,
     '-o': '--output',
@@ -51,24 +51,32 @@ ${chalk.bold('Flags')}
   // Get glob
   //
 
-  let schemasGlob: string | undefined = args['--schemas']
+  let schemasGlob = args['--schemas']
 
   if (!args['--schemas']) {
-    schemasGlob = await getConfigFromPackageJson('schemas')
+    const config = await getConfigFromPackageJson('schemas')
+    schemasGlob = config ? [config] : undefined
   }
 
-  if (!schemasGlob) {
+  if (!schemasGlob?.length) {
     throw new Error(
       'Provide a glob pattern to find your schemas. Either pass it with `--schemas` or add it to your package.json at `prisma.import.schemas`',
     )
   }
 
-  const schemaPaths = await glob(schemasGlob, {
-    cwd: process.cwd(),
-  })
+  const schemaPaths = (
+    await Promise.all(
+      schemasGlob.map(
+        async (s) =>
+          await glob(s, {
+            cwd: process.cwd(),
+          }),
+      ),
+    )
+  ).flat()
 
   if (!schemaPaths.length) {
-    throw new Error(`No schemas found using glob pattern \`${schemasGlob}\``)
+    throw new Error(`No schemas found using glob pattern \`${schemasGlob.join(', ')}\``)
   }
 
   //
