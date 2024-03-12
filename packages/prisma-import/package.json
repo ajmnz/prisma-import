@@ -29,8 +29,8 @@
     "test": "npx jest"
   },
   "dependencies": {
-    "@prisma/internals": "4.16.2",
-    "@prisma/prisma-fmt-wasm": "4.8.0-9.5be62d4c40defb9d2faf09dc30edaa449580d417",
+    "@prisma/internals": "5.11.0",
+    "@prisma/prisma-fmt-wasm": "4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085",
     "chalk": "4.1.2",
     "glob": "8.0.3",
     "prompts": "2.4.2",
