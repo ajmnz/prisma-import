@@ -1,7 +1,7 @@
 {
   "extends": ["config:base"],
   "semanticCommits": true,
-  "ignoreDeps": ["@prisma/language-server", "@prisma/prisma-fmt-wasm"],
+  "ignoreDeps": ["@prisma/language-server", "@prisma/prisma-schema-wasm"],
   "masterIssue": true,
   "reviewers": ["@Jolg42"],
   "rebaseWhen": "conflicted",
@@ -38,7 +38,7 @@
     {
       "groupName": "dependencies (non-major)",
       "depTypeList": ["dependencies"],
-      "excludePackageNames": ["@prisma/language-server", "@types/vscode", "@prisma/prisma-fmt-wasm"],
+      "excludePackageNames": ["@prisma/language-server", "@types/vscode", "@prisma/prisma-schema-wasm"],
       "updateTypes": ["patch", "minor"]
     }
   ]

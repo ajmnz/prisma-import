@@ -32,7 +32,7 @@
   "main": "./dist/index.js",
   "typings": "dist/src/index",
   "dependencies": {
-    "@prisma/prisma-fmt-wasm": "4.16.1-1.4bc8b6e1b66cb932731fb1bdbbc550d1e010de81",
+    "@prisma/prisma-schema-wasm": "4.17.0-18.43aefb4a29db88d246ea74e047e05571b65aa86f",
     "@types/js-levenshtein": "1.1.1",
     "js-levenshtein": "1.1.6",
     "klona": "2.0.6",

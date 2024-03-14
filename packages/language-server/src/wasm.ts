@@ -1,4 +1,4 @@
-import prismaFmt from '@prisma/prisma-fmt-wasm'
+import prismaFmt from '@prisma/prisma-schema-wasm'
 import { WasmPanicRegistry } from './WasmPanicRegistry'
 export { prismaFmt }
 
