@@ -32,7 +32,7 @@
     "@prisma/internals": "4.16.2",
     "@prisma/prisma-schema-wasm": "4.17.0-18.43aefb4a29db88d246ea74e047e05571b65aa86f",
     "chalk": "4.1.2",
-    "glob": "8.0.3",
+    "glob": "8.1.0",
     "prompts": "2.4.2",
     "read-pkg-up": "9.1.0"
   },
