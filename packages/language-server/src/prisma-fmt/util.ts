@@ -18,11 +18,11 @@ export function getVersion(): string {
 }
 
 /**
- * Gets Engines Version from package.json, dependencies, `@prisma/prisma-fmt-wasm`
+ * Gets Engines Version from package.json, dependencies, `@prisma/prisma-schema-wasm`
  * @returns Something like `2.26.0-23.9b816b3aa13cc270074f172f30d6eda8a8ce867d`
  */
 export function getEnginesVersion(): string {
-  return packageJson.dependencies['@prisma/prisma-fmt-wasm']
+  return packageJson.dependencies['@prisma/prisma-schema-wasm']
 }
 
 /**
