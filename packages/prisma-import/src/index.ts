@@ -3,9 +3,14 @@
 import { arg, format } from '@prisma/internals'
 import chalk from 'chalk'
 import prompts from 'prompts'
-import path from 'path'
+import { isAbsolute, resolve } from 'path'
 import { exists, getConfigFromPackageJson, glob } from './util'
 import { merge } from './merge'
+import { pathsFromBase } from './base'
+import { writeSchema } from './write'
+import { parse } from './parser'
+import { findMissing } from './find-missing'
+import { getSchemaGlobs } from './get-schema-globs'
 
 const main = async () => {
   const args = arg(process.argv.slice(2), {
@@ -13,12 +18,18 @@ const main = async () => {
     '-s': '--schemas',
     '--output': String,
     '-o': '--output',
+    '--base': String,
+    '-b': '--base',
     '--dry': Boolean,
     '-d': '--dry',
     '--help': Boolean,
     '-h': '--help',
     '--force': Boolean,
     '-f': '--force',
+    '--quiet': Boolean,
+    '-q': '--quiet',
+    '--verbose': Boolean,
+    '-v': '--verbose',
   })
 
   if (args instanceof Error) {
@@ -40,7 +51,10 @@ ${chalk.bold('Flags')}
           -d, --dry     Print the resulting schema to stdout
           -f, --force   Skip asking for confirmation on schema overwrite
           -o, --output  Specify where you want your resulting schema to be written
-          -s, --schemas Specify where your schemas are using a glob pattern
+          -b, --base    Specify a base file to recursively resolve schemas from import statements. Mutually exclusive with --schemas
+          -s, --schemas Specify where your schemas are using a glob pattern. Mutually exclusive with --base
+          -q, --quiet   Skip display of log messages
+          -v, --verbose Display additional log messages
     `),
     )
 
@@ -48,35 +62,79 @@ ${chalk.bold('Flags')}
   }
 
   //
-  // Get glob
+  // Get possible parameter inputs
   //
+  const schemasFromArg = args['--schemas']
+  const schemasFromPackage = await getConfigFromPackageJson('schemas')
+  const baseFromArg = args['--base']
+  const baseFromPackage = await getConfigFromPackageJson('base')
+  const dryMode = Boolean(args['--dry'])
+  const forceMode = Boolean(args['--force'])
+  const quietMode = Boolean(args['--quiet'])
+  const verboseMode = Boolean(args['--verbose'])
 
-  let schemasGlob = args['--schemas']
-
-  if (!args['--schemas']) {
-    const config = await getConfigFromPackageJson('schemas')
-    schemasGlob = config ? [config] : undefined
+  //
+  // Ensure schemas and base are mutally exclusive
+  //
+  if ((!!schemasFromArg || !!schemasFromPackage) && (!!baseFromArg || !!baseFromPackage)) {
+    throw new Error('Provide either a base file or schema glob patterns, not both.')
   }
 
-  if (!schemasGlob?.length) {
+  if (!schemasFromArg && !schemasFromPackage && !baseFromArg && !baseFromPackage) {
     throw new Error(
-      'Provide a glob pattern to find your schemas. Either pass it with `--schemas` or add it to your package.json at `prisma.import.schemas`',
+      'Provide a glob pattern to find your schemas. Either pass it with `--schemas` or add it to your package.json at `prisma.import.schemas`.\nAlternatively, Provide a base file. Either passit with `--base` or add it to your package.json at `prisma.import.base`',
     )
   }
 
-  const schemaPaths = (
-    await Promise.all(
-      schemasGlob.map(
-        async (s) =>
-          await glob(s, {
-            cwd: process.cwd(),
-          }),
-      ),
-    )
-  ).flat()
+  //
+  // Prioritize base over schemas
+  //
+  const useBase = !!baseFromArg || !!baseFromPackage
 
-  if (!schemaPaths.length) {
-    throw new Error(`No schemas found using glob pattern \`${schemasGlob.join(', ')}\``)
+  let schemaPaths: string[] = []
+
+  if (useBase) {
+    const relativeBasePath = baseFromArg ?? baseFromPackage
+
+    if (relativeBasePath) {
+      const absoluteBasePath = isAbsolute(relativeBasePath) ? relativeBasePath : resolve(relativeBasePath)
+
+      schemaPaths = await pathsFromBase(absoluteBasePath, quietMode, verboseMode)
+
+      if (!quietMode) {
+        console.log(
+          `✔ Resolved ${chalk.blueBright(schemaPaths.length.toString() + ' schema(s)')} from ${absoluteBasePath}`,
+        )
+      }
+    }
+  } else {
+    //
+    // Get glob
+    //
+    const schemasGlob = getSchemaGlobs(schemasFromArg, schemasFromPackage)
+
+    if (schemasGlob) {
+      schemaPaths = (
+        await Promise.all(
+          schemasGlob.map(
+            async (s) =>
+              await glob(s, {
+                cwd: process.cwd(),
+              }),
+          ),
+        )
+      ).flat()
+
+      if (!schemaPaths.length) {
+        throw new Error(`No schemas found using glob pattern \`${schemasGlob.join(', ')}\``)
+      }
+
+      if (!quietMode) {
+        console.log(
+          `✔ Resolved ${chalk.blueBright(schemaPaths.length.toString() + ' schema(s)')} from ${schemasGlob.join(', ')}`,
+        )
+      }
+    }
   }
 
   //
@@ -95,20 +153,18 @@ ${chalk.bold('Flags')}
     )
   }
 
-  const absoluteOutputPath = path.isAbsolute(relativeOutputPath) ? relativeOutputPath : path.resolve(relativeOutputPath)
+  const absoluteOutputPath = isAbsolute(relativeOutputPath) ? relativeOutputPath : resolve(relativeOutputPath)
 
   //
   // Confirm schema overwrite
   //
-
-  const dryMode = Boolean(args['--dry'])
-  const forceMode = Boolean(args['--force'])
-
-  if (dryMode) {
+  if (dryMode && !quietMode) {
     console.log(`✔ Running in ${chalk.blueBright('dry mode')}\n`)
   }
 
-  if (!forceMode && !dryMode && (await exists(absoluteOutputPath))) {
+  const oldSchemaExists = await exists(absoluteOutputPath)
+
+  if (!forceMode && !dryMode && oldSchemaExists) {
     const result = await prompts({
       type: 'confirm',
       name: 'confirm',
@@ -122,7 +178,36 @@ ${chalk.bold('Flags')}
     }
   }
 
-  await merge(schemaPaths, absoluteOutputPath, dryMode)
+  const newSchema = await merge(schemaPaths)
+
+  if (oldSchemaExists) {
+    const oldSchema = await parse(absoluteOutputPath)
+    const missing = findMissing(oldSchema, newSchema)
+
+    if (!quietMode) {
+      console.log(`✔ There are ${chalk.blueBright(missing.length)} models missing from the merged file`)
+
+      if (missing.length) {
+        console.table(missing)
+      }
+    }
+
+    if (missing.length && !forceMode) {
+      const result = await prompts({
+        type: 'confirm',
+        name: 'confirm',
+        message: `Using this schema will cause ${chalk.red('data loss')} due to ${chalk.red(
+          missing.length,
+        )} missing models. You can disable this prompt with the ${chalk.blueBright('--force')} option. Continue?`,
+      })
+
+      if (!result.confirm) {
+        process.exit(1)
+      }
+    }
+  }
+
+  await writeSchema(newSchema, absoluteOutputPath, dryMode)
 }
 
 void main()
