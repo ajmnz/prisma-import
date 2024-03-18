@@ -1,7 +1,7 @@
 import path from 'path'
 import { readFile, writeFile } from 'fs/promises'
 import { ensureDirectoryExistence } from './util'
-import { format } from '@prisma/prisma-fmt-wasm'
+import { format } from '@prisma/prisma-schema-wasm'
 import { pathToFileURL } from 'url'
 
 export const merge = async (schemaPaths: string[], outputPath: string, dry: boolean) => {
