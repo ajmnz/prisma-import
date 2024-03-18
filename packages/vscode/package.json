@@ -2,7 +2,7 @@
   "name": "prisma-import",
   "displayName": "Prisma Import",
   "description": "Adds import statements to your Prisma schemas",
-  "version": "4.16.2",
+  "version": "5.11.0",
   "license": "Apache-2.0",
   "icon": "logo_white.png",
   "engines": {
@@ -13,7 +13,7 @@
     "Programming Languages"
   ],
   "dependencies": {
-    "@ajmnz/prisma-language-server": "4.16.2",
+    "@ajmnz/prisma-language-server": "5.11.0",
     "checkpoint-client": "1.1.23",
     "minimatch": "6.0.0",
     "vscode-languageclient": "7.0.0",
@@ -164,7 +164,7 @@
     "@types/glob": "8.1.0",
     "@types/mocha": "10.0.2",
     "@types/vscode": "1.56.0",
-    "@vscode/test-electron": "2.3.5",
+    "@vscode/test-electron": "2.3.9",
     "@vscode/vsce": "2.21.1",
     "is-ci": "3.0.1",
     "mocha": "10.2.0",
