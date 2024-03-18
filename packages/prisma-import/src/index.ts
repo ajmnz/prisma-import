@@ -10,6 +10,7 @@ import { pathsFromBase } from './base'
 import { writeSchema } from './write'
 import { parse } from './parser'
 import { findMissing } from './find-missing'
+import { getSchemaGlobs } from './get-schema-globs'
 
 const main = async () => {
   const args = arg(process.argv.slice(2), {
@@ -110,11 +111,7 @@ ${chalk.bold('Flags')}
     //
     // Get glob
     //
-    let schemasGlob = schemasFromArg
-
-    if (!schemasGlob?.length) {
-      schemasGlob = schemasFromPackage ? [schemasFromPackage] : undefined
-    }
+    const schemasGlob = getSchemaGlobs(schemasFromArg, schemasFromPackage)
 
     if (schemasGlob) {
       schemaPaths = (

@@ -51,3 +51,14 @@ export const getConfigFromPackageJson = async (
 
   return prismaConfig?.data?.import?.[key]
 }
+
+export function asArray(arr: unknown) {
+  if (arr) {
+    if (Array.isArray(arr) && arr.length) {
+      return arr as unknown[]
+    } else if (new String(arr).length) {
+      return [arr] as unknown[]
+    }
+  }
+  return undefined
+}
