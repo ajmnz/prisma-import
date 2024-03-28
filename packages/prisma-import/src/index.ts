@@ -55,7 +55,18 @@ ${chalk.bold('Flags')}
 
   if (!args['--schemas']) {
     const config = await getConfigFromPackageJson('schemas')
-    schemasGlob = config ? [config] : undefined
+
+    if (config) {
+      if (Array.isArray(config) && config.length) {
+        schemasGlob = config
+      } else if (new String(config).length) {
+        schemasGlob = [config]
+      } else {
+        schemasGlob = undefined
+      }
+    } else {
+      schemasGlob = undefined
+    }
   }
 
   if (!schemasGlob?.length) {
