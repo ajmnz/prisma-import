@@ -3,7 +3,7 @@
   "description": "Prisma Language Server",
   "displayName": "Prisma Language Server",
   "author": "Arnau Jiménez",
-  "version": "5.12.0",
+  "version": "5.12.1",
   "license": "Apache-2.0",
   "publisher": "ajmnz",
   "files": [
@@ -14,7 +14,7 @@
   },
   "prisma": {
     "enginesVersion": "473ed3124229e22d881cb7addf559799debae1ab",
-    "cliVersion": "5.12.0"
+    "cliVersion": "5.12.1"
   },
   "bin": "dist/src/bin.js",
   "repository": {
