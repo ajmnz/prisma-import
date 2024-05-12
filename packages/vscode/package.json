@@ -170,7 +170,7 @@
     "mocha": "10.2.0",
     "ovsx": "0.8.3",
     "release-it": "15.11.0",
-    "rimraf": "3.0.2",
+    "rimraf": "5.0.7",
     "typescript": "4.9.5"
   },
   "gitHead": "7d51b157647fe1705813a30d1a77b8ccf136b8d4",
