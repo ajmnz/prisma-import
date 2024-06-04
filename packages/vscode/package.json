@@ -14,8 +14,8 @@
   ],
   "dependencies": {
     "@ajmnz/prisma-language-server": "5.12.1",
-    "checkpoint-client": "1.1.23",
-    "minimatch": "6.0.0",
+    "checkpoint-client": "1.1.33",
+    "minimatch": "6.2.0",
     "vscode-languageclient": "7.0.0",
     "watcher": "^1.2.0"
   },
