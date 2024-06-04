@@ -10,6 +10,18 @@
 
 <hr>
 
+### ❗ This project is no longer maintained
+
+Prisma has released native multi-schema support, addressing exactly what this project aimed to solve. More info:
+
+- Release Notes: https://github.com/prisma/prisma/releases/tag/5.15.0
+- Documentation: https://prisma.io/docs/orm/prisma-schema/overview/location#multi-file-prisma-schema
+- Announcement blog post: https://www.prisma.io/blog/organize-your-prisma-schema-with-multi-file-support
+
+Thank you!
+
+<hr>
+
 - [Description](#description)
   - [VSCode Extension \& Language Server](#vscode-extension--language-server)
   - [CLI](#cli)
