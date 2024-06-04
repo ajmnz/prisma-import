@@ -1,8 +1,6 @@
 name: 1. Check for Prisma CLI Update
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 env:
